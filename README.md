@@ -6,7 +6,7 @@ The reasoning is that I want to be able to clone my zsh configuration on any OS 
 
 ## How? ##
 
-This does require a two liner `.zshenv` script.
+This does require a two liner `$HOME/.zshenv` file.
 
 ``` shell
 ZDOTDIR="$HOME/.zsh.d"
