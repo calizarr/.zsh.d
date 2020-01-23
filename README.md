@@ -9,9 +9,9 @@ The reasoning is that I want to be able to clone my zsh configuration on any OS 
 This does require a two liner `.zshenv` script.
 
 ``` shell
-ZDOTDIR="$HOME/.zsh"
+ZDOTDIR="$HOME/.zsh.d"
 source $ZDOTDIR/.zshenv
 ```
 
-Then clone this repo into `$HOME/.zsh`
+Then clone this repo into `$HOME/.zsh.d`
 
