@@ -112,6 +112,15 @@ alias -g Y="-o yaml"
 alias -g YL="-o yaml | less"
 alias -g PL="| less"
 
+kubectl_namespace_cluster () {
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    cluster=`kubectl config view --minify --output json | jq ".clusters[0].name" | sed 's/"//g'`
+    echo "Cluster: $cluster"
+    echo "Namespace: $namespace"
+}
+
+alias kname=kubectl_namespace_cluster
+
 case "$OSTYPE" in
     darwin*)
         alias ll='exa -la'

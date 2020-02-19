@@ -40,6 +40,3 @@ export GOPATH="$HOME/go"
 # SSH SETTINGS.
 
 SSH_ENV="$HOME/.ssh/env"
-
-
-
