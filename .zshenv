@@ -1,4 +1,5 @@
 # .zshenv should be used for environment variables etc
+echo "Loading internal $ZDOTDIR/.zshenv..."
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -20,7 +21,7 @@ function pathClean() {
 }
 
 if [ "$(file /cibo)" = "/cibo: directory" ]; then
-    export PATH=/cibo/shared-scripts:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH
+    export PATH=/cibo/shared-scripts/local:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH
 fi
 
 # Setting the Go path
@@ -39,4 +40,4 @@ export GOPATH="$HOME/go"
 
 # SSH SETTINGS.
 
-SSH_ENV="$HOME/.ssh/env"
+export SSH_ENV="$HOME/.ssh/env"

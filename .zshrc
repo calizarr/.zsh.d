@@ -1,3 +1,6 @@
+echo "Loading internal ${ZDOTDIR}/.zshrc..."
+source ${ZDOTDIR}/.zshenv
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -155,8 +158,6 @@ function fpathClean() {
     NEWPATH=$(echo $1 | sed -e 's/ /\'$'\n/g' | perl -ne 'print unless $seen{$_}++' | paste -s -d' ' -)
     echo $NEWPATH
 }
-
-## PATH Fixing and changing local variables
 
 function start_agent {
     echo "Initialising new SSH agent..."
