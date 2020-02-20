@@ -117,8 +117,8 @@ kubectl_namespace_cluster () {
     cluster=`kubectl config view --minify --output 'jsonpath={.clusters[0].name}'`
     context=`kubectl config view --minify --output 'jsonpath={.contexts[0].name}'`
     echo "Cluster: $cluster"
-    echo "Namespace: $namespace"
     echo "Context: $context"
+    echo "Namespace: $namespace"
 }
 
 alias kname=kubectl_namespace_cluster
