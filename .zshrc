@@ -45,7 +45,7 @@ prompt_context(){}
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
-ENABLE_CORRECTION="true"
+# ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 COMPLETION_WAITING_DOTS="true"
@@ -112,10 +112,29 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias k=kubectl
 alias -g Y="-o yaml"
-alias -g YL="-o yaml | less"
-alias -g PL="| less"
+alias -g YL="-o yaml | less -R"
+alias -g PL="| less -R"
+alias -g YPL="-o yaml | yq r - -PC | less"
+alias emacsnw='emacs -nw'
+alias watch='watch '
+eval "$(hub alias -s)"
+alias kname=kubectl_namespace_cluster
 
-kubectl_namespace_cluster () {
+### FUNCTIONS ###
+
+# Function to clear all metals and bloop remnants
+function clear_metals () {
+    if [[ -a "build.sbt" ]]; then
+        find . -name "*metals*" | xargs -I {} rm -rf {} \;
+        find . -name "*bloop*" | xargs -I {} rm -rf {} \;
+    else
+        echo "Not at the root of an SBT project"
+        return 1
+    fi
+}
+
+# Get your current kubernetes everything
+function kubectl_namespace_cluster () {
     namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
     cluster=`kubectl config view --minify --output 'jsonpath={.clusters[0].name}'`
     context=`kubectl config view --minify --output 'jsonpath={.contexts[0].name}'`
@@ -123,8 +142,6 @@ kubectl_namespace_cluster () {
     echo "Context: $context"
     echo "Namespace: $namespace"
 }
-
-alias kname=kubectl_namespace_cluster
 
 case "$OSTYPE" in
     darwin*)
@@ -137,7 +154,7 @@ case "$OSTYPE" in
 esac
 
 # DGD Function for git page
-ghp () {
+function ghp () {
     repo="https://"`git config --get remote.origin.url | sed 's|git@||' | sed 's|\.git||' | sed 's|:|/|'`
     case "$OSTYPE" in
         darwin*)
@@ -148,10 +165,6 @@ ghp () {
             ;;
     esac
 }
-
-alias emacsnw='emacs -nw'
-alias watch='watch '
-eval "$(hub alias -s)"
 
 function fpathClean() {
     # Cleans fpath of duplicated portions
@@ -166,6 +179,36 @@ function start_agent {
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}" > /dev/null
     /usr/bin/ssh-add;
+}
+
+function aws_assume_role() {
+    local AWS_PROFILE=$1
+    if [ -z "$2" ]; then
+        local KOPS_STATE_STORE=$KOPS_STATE_STORE
+    else
+        local KOPS_STATE_STORE=$2
+    fi
+    ROLE_ARN=$(aws configure get role_arn --profile $AWS_PROFILE)
+    ROLE_JSON=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name $AWS_PROFILE)
+    AWS_ACCESS_KEY_ID=$(echo $ROLE_JSON | jq -r ".Credentials.AccessKeyId")
+    AWS_SECRET_ACCESS_KEY=$(echo $ROLE_JSON | jq -r ".Credentials.SecretAccessKey")
+    AWS_SESSION_TOKEN=$(echo $ROLE_JSON | jq -r ".Credentials.SessionToken")
+    echo "export AWS_PROFILE=$AWS_PROFILE"
+    echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+    echo "export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN"
+    echo "export KOPS_STATE_STORE=$KOPS_STATE_STORE"
+}
+
+function aws_assume_sdk_load() {
+    local AWS_PROFILE=$1
+    if [ -z "$2" ]; then
+        local KOPS_STATE_STORE=$KOPS_STATE_STORE
+    else
+        local KOPS_STATE_STORE=$2
+    fi
+    echo "export AWS_PROFILE=$AWS_PROFILE"
+    echo "export AWS_SDK_LOAD_CONFIG=true"
+    echo "export KOPS_STATE_STORE=$KOPS_STATE_STORE"
 }
 
 # Source SSH settings, if applicable
@@ -211,3 +254,17 @@ test -e $TOKENS_FILE && source $TOKENS_FILE
 # autoload -U compinit && compinit
 autoload -Uz compinit
 compinit -z
+
+if [[ -a "$(which vault)" ]]; then
+    autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
+fi
+
+if [[ -a "$(which terraform)" ]]; then
+    autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
+fi
+
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+PS1='$(kube_ps1)'$PS1
+
+# Tmux screws up my nice non-duplicated path
+export PATH=$(pathClean $PATH)

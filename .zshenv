@@ -1,5 +1,5 @@
 # .zshenv should be used for environment variables etc
-echo "Loading internal $ZDOTDIR/.zshenv..."
+# echo "Loading internal $ZDOTDIR/.zshenv..."
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -26,6 +26,8 @@ fi
 
 # Setting the Go path
 export PATH="$PATH":$HOME/go/bin
+# Setting the krew for kubectl PATH
+export PATH="${PATH}:${HOME}/.krew/bin"
 
 export PATH=$(pathClean $PATH)
 
@@ -37,6 +39,9 @@ PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
 
 # Set up GOPATH
 export GOPATH="$HOME/go"
+
+# Set up JAVA_HOME
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/Home
 
 # SSH SETTINGS.
 
