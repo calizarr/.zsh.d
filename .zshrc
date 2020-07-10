@@ -119,6 +119,8 @@ alias emacsnw='emacs -nw'
 alias watch='watch '
 eval "$(hub alias -s)"
 alias kname=kubectl_namespace_cluster
+alias kctx=kubectx
+alias kns=kubens
 
 ### FUNCTIONS ###
 
@@ -181,35 +183,116 @@ function start_agent {
     /usr/bin/ssh-add;
 }
 
+# AWS Functions
 function aws_assume_role() {
-    local AWS_PROFILE=$1
+    export AWS_PROFILE="$1"
     if [ -z "$2" ]; then
-        local KOPS_STATE_STORE=$KOPS_STATE_STORE
+        KOPS_STATE_STORE="$KOPS_STATE_STORE"
     else
-        local KOPS_STATE_STORE=$2
+        echo "Storing previous KOPS_STATE_STORE: $KOPS_STATE_STORE"
+        export PREV_KOPS_STATE_STORE="$KOPS_STATE_STORE"
+        KOPS_STATE_STORE="$2"
     fi
+    echo "Assuming into role..."
     ROLE_ARN=$(aws configure get role_arn --profile $AWS_PROFILE)
-    ROLE_JSON=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name $AWS_PROFILE)
-    AWS_ACCESS_KEY_ID=$(echo $ROLE_JSON | jq -r ".Credentials.AccessKeyId")
-    AWS_SECRET_ACCESS_KEY=$(echo $ROLE_JSON | jq -r ".Credentials.SecretAccessKey")
-    AWS_SESSION_TOKEN=$(echo $ROLE_JSON | jq -r ".Credentials.SessionToken")
-    echo "export AWS_PROFILE=$AWS_PROFILE"
-    echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
-    echo "export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN"
-    echo "export KOPS_STATE_STORE=$KOPS_STATE_STORE"
+    ROLE_JSON=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name $(whoami)-$AWS_PROFILE)
+    export AWS_ACCESS_KEY_ID="$(echo $ROLE_JSON | jq -r ".Credentials.AccessKeyId")"
+    export AWS_SECRET_ACCESS_KEY="$(echo $ROLE_JSON | jq -r ".Credentials.SecretAccessKey")"
+    export AWS_SESSION_TOKEN="$(echo $ROLE_JSON | jq -r ".Credentials.SessionToken")"
+    export AWS_SDK_LOAD_CONFIG='true'
+    export AWS_REGION="us-east-1"
+    export KOPS_STATE_STORE="$KOPS_STATE_STORE"
+}
+
+function aws_assume_role_long() {
+    export AWS_PROFILE="cibo-no-mfa"
+    local MFA_CREDENTIALS_FILE="$HOME/.aws/mfa/serial"
+    local MFA_SERIAL_NUMBER="$(jq -cr '.MFADevices[0].SerialNumber' $MFA_CREDENTIALS_FILE)"
+    local AWS_PROD_ROLE="$1"
+    echo "Allowing maximum time of 43200 seconds aka 12 hours"
+    local DURATION_SECONDS=43200
+    ROLE_ARN=$(aws configure get role_arn --profile $AWS_PROD_ROLE)
+    printf "MFA Code: "
+    read TOKEN_CODE
+    ROLE_JSON=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name $(whoami)-$AWS_PROD_ROLE --duration-seconds $DURATION_SECONDS --serial-number $MFA_SERIAL_NUMBER --token-code $TOKEN_CODE)
+    export AWS_ACCESS_KEY_ID="$(echo $ROLE_JSON | jq -r ".Credentials.AccessKeyId")"
+    export AWS_SECRET_ACCESS_KEY="$(echo $ROLE_JSON | jq -r ".Credentials.SecretAccessKey")"
+    export AWS_SESSION_TOKEN="$(echo $ROLE_JSON | jq -r ".Credentials.SessionToken")"
+    EXPIRATION_DATE=$(echo $ROLE_JSON | jq -r ".Credentials.Expiration")
+    echo "Verify expiration date in UTC time is 12 hours from now"
+    echo "Expiration date: $EXPIRATION_DATE"
+    echo "Current date   : $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    export AWS_SDK_LOAD_CONFIG="true"
+    export AWS_REGION="us-east-1"
+}
+
+function aws_check_role() {
+    echo "AWS_PROFILE: $AWS_PROFILE"
+    echo "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
+    echo "AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY"
+    echo "AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN"
+    echo "AWS_SDK_LOAD_CONFIG: $AWS_SDK_LOAD_CONFIG"
+    echo "AWS_REGION: $AWS_REGION"
+    echo "KOPS_STATE_STORE: $KOPS_STATE_STORE"
+}
+
+function aws_unassume_role_long() {
+    unset AWS_PROFILE
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+    unset AWS_SESSION_TOKEN
+    unset AWS_SDK_LOAD_CONFIG
+    unset AWS_REGION
+}
+
+function aws_unassume_role() {
+    if [ -z "$PREV_KOPS_STATE_STORE" ]; then
+        echo "It already is the same, don't do anything" >&2
+    else
+        echo "It exists, return to normal. Original: $PREV_KOPS_STATE_STORE" >&2
+        export KOPS_STATE_STORE="$PREV_KOPS_STATE_STORE"
+    fi    
+    unset AWS_PROFILE
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+    unset AWS_SESSION_TOKEN
+    unset AWS_SDK_LOAD_CONFIG
+    unset AWS_REGION
 }
 
 function aws_assume_sdk_load() {
-    local AWS_PROFILE=$1
+    AWS_PROFILE="$1"
     if [ -z "$2" ]; then
-        local KOPS_STATE_STORE=$KOPS_STATE_STORE
+        export KOPS_STATE_STORE="$KOPS_STATE_STORE"
     else
-        local KOPS_STATE_STORE=$2
+        echo "Storing previous KOPS_STATE_STORE: $KOPS_STATE_STORE"
+        export PREV_KOPS_STATE_STORE="$KOPS_STATE_STORE"
+        KOPS_STATE_STORE="$2"
     fi
-    echo "export AWS_PROFILE=$AWS_PROFILE"
-    echo "export AWS_SDK_LOAD_CONFIG=true"
-    echo "export KOPS_STATE_STORE=$KOPS_STATE_STORE"
+    export AWS_PROFILE="$AWS_PROFILE"
+    export AWS_SDK_LOAD_CONFIG='true'
+    export AWS_REGION="us-east-1"
+    export KOPS_STATE_STORE="$KOPS_STATE_STORE"
 }
+
+function aws_check_sdk() {
+    echo "AWS_PROFILE: $AWS_PROFILE"
+    echo "AWS_SDK_LOAD_CONFIG: $AWS_SDK_LOAD_CONFIG"
+    echo "AWS_REGION: $AWS_REGION"
+    echo "KOPS_STATE_STORE: $KOPS_STATE_STORE"
+}
+
+function aws_unassume_sdk_load() {
+    if [ -z "$PREV_KOPS_STATE_STORE" ]; then
+        echo "It already is the same, don't do anything"
+    else
+        export KOPS_STATE_STORE="$PREV_KOPS_STATE_STORE"
+    fi
+    unset AWS_PROFILE
+    unset AWS_SDK_LOAD_CONFIG
+    unset AWS_REGION
+}
+
 
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
