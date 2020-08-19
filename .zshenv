@@ -21,7 +21,7 @@ function pathClean() {
 }
 
 if [ "$(file /cibo)" = "/cibo: directory" ]; then
-    export PATH=/cibo/shared-scripts/local:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH
+    export PATH=/cibo/shared-scripts/local:/cibo/shared-scripts/local/aws_accounts:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH
 fi
 
 # Setting the Go path
@@ -46,3 +46,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/H
 # SSH SETTINGS.
 
 export SSH_ENV="$HOME/.ssh/env"
+
+# Default Editor
+# export EDITOR="emacs -nw"
+
