@@ -115,6 +115,7 @@ alias -g Y="-o yaml"
 alias -g YL="-o yaml | less -R"
 alias -g PL="| less -R"
 alias -g YPL="-o yaml | yq r - -PC | less"
+alias -g EPL="2>&1 | less -R"
 alias emacsnw='emacs -nw'
 alias watch='watch '
 eval "$(hub alias -s)"
@@ -183,5 +184,3 @@ PS1='$(kube_ps1)'$PS1
 
 # Tmux screws up my nice non-duplicated path
 export PATH=$(pathClean $PATH)
-
-
