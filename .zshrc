@@ -182,5 +182,8 @@ fi
 source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 PS1='$(kube_ps1)'$PS1
 
+# fzf
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 # Tmux screws up my nice non-duplicated path
 export PATH=$(pathClean $PATH)

@@ -40,8 +40,11 @@ PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
 # Set up GOPATH
 export GOPATH="$HOME/go"
 
-# Set up JAVA_HOME
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/Home
+case "$OSTYPE" in
+    darwin*)
+        # Set up JAVA_HOME
+        export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+esac
 
 # SSH SETTINGS.
 

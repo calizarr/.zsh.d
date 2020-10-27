@@ -13,6 +13,13 @@ function clear_metals () {
     fi
 }
 
+# Function clear emacs Darwin
+function osx_clear_emacs () {
+    rm /usr/local/bin/emacs*
+    rm /usr/local/bin/etags
+    rm /usr/local/bin/ebrowse
+}
+
 # Get your current kubernetes everything
 function kubectl_namespace_cluster () {
     namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
