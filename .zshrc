@@ -185,5 +185,10 @@ PS1='$(kube_ps1)'$PS1
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+export FZF_DEFAULT_OPTS="--border --height=50%"
+export FZF_DEFAULT_COMMAND='fd -HI --type f'
+
 # Tmux screws up my nice non-duplicated path
 export PATH=$(pathClean $PATH)
+
+# export EDITOR="emacs -nw -q"
