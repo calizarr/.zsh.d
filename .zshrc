@@ -115,6 +115,7 @@ alias -g Y="-o yaml"
 alias -g YL="-o yaml | less -R"
 alias -g PL="| less -R"
 alias -g YPL="-o yaml | yq r - -PC | less"
+alias -g YPNL="-o yaml | kubectl neat | yq r - -PC | less"
 alias -g EPL="2>&1 | less -R"
 alias emacsnw='emacs -nw'
 alias watch='watch '
