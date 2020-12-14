@@ -158,10 +158,14 @@ esac
 bindkey -e
 
 # Sourcing completions etc.
-for PROFILE_SCRIPT in $( ls $HOME/.zsh_settings/*.zsh ); do
-    # echo "Sourcing $PROFILE_SCRIPT"
-    source $PROFILE_SCRIPT
-done
+
+ZSH_SETTINGS="$HOME/.zsh_settings"
+if [ -d "$ZSH_SETTINGS" ]; then
+    for PROFILE_SCRIPT in $( ls $ZSH_SETTINGS/*.zsh ); do
+        # echo "Sourcing $PROFILE_SCRIPT"
+        source $PROFILE_SCRIPT
+    done
+fi
 
 TOKENS_FILE="$HOME/tokens/github_tokens.zsh"
 test -e $TOKENS_FILE && source $TOKENS_FILE
@@ -180,8 +184,17 @@ if [[ -a "$(which terraform)" ]]; then
     autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
 fi
 
-source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
-PS1='$(kube_ps1)'$PS1
+case "$OSTYPE" in
+    darwin*)
+        source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+        PS1='$(kube_ps1)'$PS1
+        ;;
+    linux*)
+        source "/home/linuxbrew/.linuxbrew/opt/kube-ps1/share/kube-ps1.sh"
+        PS1='$(kube_ps1)'$PS1
+        ;;
+esac
+
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
