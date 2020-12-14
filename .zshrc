@@ -144,13 +144,25 @@ eval "$(pyenv init -)"
 # Pyenv Virtualenv
 if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
-# OSX Brew Specifics
+# Brew specific sourcing
 case "$OSTYPE" in
+    # OSX Brew Specifics
     darwin*)
         export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
         source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
         source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
         source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+        ;;
+    # Linux Brew Specifics
+    linux*)
+        if type brew &>/dev/null; then
+            FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+            autoload -Uz compinit
+            compinit
+        fi
+        source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+        source /home/linuxbrew/.linuxbrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+        source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh        
         ;;
 esac
 
@@ -192,6 +204,8 @@ case "$OSTYPE" in
     linux*)
         source "/home/linuxbrew/.linuxbrew/opt/kube-ps1/share/kube-ps1.sh"
         PS1='$(kube_ps1)'$PS1
+        alias "cs=xclip -selection clipboard"
+        alias "vs=xclip -o -selection clipboard"
         ;;
 esac
 
