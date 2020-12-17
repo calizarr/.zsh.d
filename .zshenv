@@ -20,9 +20,7 @@ function pathClean() {
     echo "$NEWPATH"
 }
 
-if [ "$(file /cibo)" = "/cibo: directory" ]; then
-    export PATH=/cibo/shared-scripts/local:/cibo/shared-scripts/local/aws_accounts:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH
-fi
+test -d "/cibo" && export PATH="/cibo/shared-scripts/local:/cibo/shared-scripts/local/aws_accounts:$HOME/.local/bin:/usr/local/opt/swagger-codegen@2/bin:$PATH"
 
 # Setting the Go path
 export PATH="$PATH":$HOME/go/bin

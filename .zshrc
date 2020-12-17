@@ -196,6 +196,11 @@ if [[ -a "$(which terraform)" ]]; then
     autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
 fi
 
+if [[ -a "$(which aws)" ]]; then
+    # AWS Completion
+    autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
+fi
+
 case "$OSTYPE" in
     darwin*)
         source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
@@ -220,3 +225,5 @@ export FZF_DEFAULT_COMMAND='fd -HI --type f'
 export PATH=$(pathClean $PATH)
 
 # export EDITOR="emacs -nw -q"
+
+
