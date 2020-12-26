@@ -126,6 +126,7 @@ alias kns=kubens
 
 # Add Functions from another file to fpath
 # Figure out how to use $fpath for this
+typeset -U fpath
 source $ZDOTDIR/personal_funcs/_personal
 
 # Source SSH settings, if applicable
@@ -141,6 +142,7 @@ fi
 
 # Pyenv
 eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 # Pyenv Virtualenv
 if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
@@ -156,13 +158,21 @@ case "$OSTYPE" in
     # Linux Brew Specifics
     linux*)
         if type brew &>/dev/null; then
-            FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+            fpath=($(brew --prefix)/share/zsh-completions $fpath)
+            # FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+            source $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
+            source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+            source $(brew --prefix)/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+            source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh                    
             autoload -Uz compinit
             compinit
+        elif type nix-env &>/dev/null; then
+            NIX_SHARE="$HOME/.nix-profile/share"
+            fpath=("${NIX_SHARE}/zsh/site-functions/" $fpath)
+            source "${NIX_SHARE}/zsh-autosuggestions/zsh-autosuggestions.zsh"
+            source "${NIX_SHARE}/zsh-history-substring-search/zsh-history-substring-search.zsh"
+            source "${NIX_SHARE}/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
         fi
-        source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-        source /home/linuxbrew/.linuxbrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-        source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh        
         ;;
 esac
 
@@ -207,7 +217,7 @@ case "$OSTYPE" in
         PS1='$(kube_ps1)'$PS1
         ;;
     linux*)
-        source "/home/linuxbrew/.linuxbrew/opt/kube-ps1/share/kube-ps1.sh"
+        source "$HOME/.local/share/kube-ps1/kube-ps1.sh"
         PS1='$(kube_ps1)'$PS1
         alias "cs=xclip -selection clipboard"
         alias "vs=xclip -o -selection clipboard"
@@ -221,9 +231,4 @@ esac
 export FZF_DEFAULT_OPTS="--border --height=50%"
 export FZF_DEFAULT_COMMAND='fd -HI --type f'
 
-# Tmux screws up my nice non-duplicated path
-export PATH=$(pathClean $PATH)
-
 # export EDITOR="emacs -nw -q"
-
-

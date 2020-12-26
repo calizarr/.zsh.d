@@ -177,3 +177,10 @@ function aws_unassume_sdk_load() {
     unset AWS_SDK_LOAD_CONFIG
     unset AWS_REGION
 }
+
+# Path Manipulation
+function pathClean() {
+    # Cleans path of duplicated portions.
+    NEWPATH=$(echo $1 | sed 's/:/\'$'\n/g' | perl -ne 'print unless $seen{$_}++' | paste -s -d':' -)
+    echo "$NEWPATH"
+}
