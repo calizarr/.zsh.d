@@ -24,7 +24,9 @@ case "$OSTYPE" in
         ;;
 esac
 
-test -d "/cibo" && export PATH="/cibo/shared-scripts/local:/cibo/shared-scripts/local/aws_accounts:$HOME/.local/bin:$PATH"
+if [[ -d "/cibo" ]];then
+    path=(/cibo/shared-scripts/local /cibo/shared-scripts/local/aws_accounts $HOME/.local/bin $path)
+fi
 
 # Setting the Go path
 path+=$HOME/go/bin

@@ -232,3 +232,8 @@ export FZF_DEFAULT_OPTS="--border --height=50%"
 export FZF_DEFAULT_COMMAND='fd -HI --type f'
 
 # export EDITOR="emacs -nw -q"
+
+if [[ -d "$HOME/.sdkman/" ]]; then
+    export SDKMAN_DIR="$HOME/.sdkman"
+    [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+fi
