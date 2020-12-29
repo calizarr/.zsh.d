@@ -228,9 +228,6 @@ esac
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-export FZF_DEFAULT_OPTS="--border --height=50%"
-export FZF_DEFAULT_COMMAND='fd -HI --type f'
-
 # export EDITOR="emacs -nw -q"
 
 if [[ -d "$HOME/.sdkman/" ]]; then

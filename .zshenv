@@ -45,6 +45,10 @@ case "$OSTYPE" in
         export JAVA_HOME=$(/usr/libexec/java_home -v 11)
 esac
 
+# Setting default FZF ops
+export FZF_DEFAULT_OPTS="--border --height=50%"
+export FZF_DEFAULT_COMMAND='fd -HI --type f' 
+
 # SSH SETTINGS.
 
 export SSH_ENV="$HOME/.ssh/env"
