@@ -81,6 +81,7 @@ plugins=(
     brew
     osx
     docker
+    kubectl
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -219,8 +220,8 @@ case "$OSTYPE" in
     linux*)
         source "$HOME/.local/share/kube-ps1/kube-ps1.sh"
         PS1='$(kube_ps1)'$PS1
-        alias "cs=xclip -selection clipboard"
-        alias "vs=xclip -o -selection clipboard"
+        alias "xcopy=xclip -selection clipboard"
+        alias "xpaste=xclip -o -selection clipboard"
         ;;
 esac
 
@@ -230,7 +231,18 @@ esac
 
 # export EDITOR="emacs -nw -q"
 
+setopt no_aliases
+
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+setopt aliases
+
 if [[ -d "$HOME/.sdkman/" ]]; then
     export SDKMAN_DIR="$HOME/.sdkman"
     [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 fi
+
+# Apparently required to disable GUI gpg
+GPG_TTY=$(tty)
+export GPG_TTY

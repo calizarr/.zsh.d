@@ -30,6 +30,7 @@ fi
 
 # Setting the Go path
 path+=$HOME/go/bin
+path+=$HOME/go_workspace/bin
 path=($HOME/.pyenv/bin $path)
 # Setting the krew for kubectl PATH
 path+=${HOME}/.krew/bin
@@ -37,7 +38,8 @@ path+=${HOME}/.krew/bin
 # export PATH=$(pathClean $PATH)
 
 # Set up GOPATH
-export GOPATH="$HOME/go"
+export GOROOT="$HOME/go"
+export GOPATH="$HOME/go_workspace"
 
 case "$OSTYPE" in
     darwin*)
@@ -55,3 +57,6 @@ export SSH_ENV="$HOME/.ssh/env"
 
 # Default Editor
 # export EDITOR="emacs -nw"
+
+# NVM, Nodejs, NPM
+export NVM_DIR="$HOME/.nvm"
