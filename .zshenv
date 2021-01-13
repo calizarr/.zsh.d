@@ -20,6 +20,8 @@ case "$OSTYPE" in
     linux*)
         if [[ -e ~/.nix-profile/etc/profile.d/nix.sh ]]; then
             source ~/.nix-profile/etc/profile.d/nix.sh
+            # export LOCALE_ARCHIVE=$(nix-env --installed --no-name --out-path --query glibc-locales)/lib/locale/locale-archive
+            export LOCALE_ARCHIVE="/usr/lib/locale/locale-archive"
         fi
         ;;
 esac
