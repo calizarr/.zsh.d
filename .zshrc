@@ -144,8 +144,6 @@ fi
 # Pyenv
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
-# Pyenv Virtualenv
-if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
 
 # Brew specific sourcing
 case "$OSTYPE" in
