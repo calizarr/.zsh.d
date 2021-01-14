@@ -191,25 +191,6 @@ fi
 TOKENS_FILE="$HOME/tokens/github_tokens.zsh"
 test -e $TOKENS_FILE && source $TOKENS_FILE
 
-# Some crazy autoloading
-# autoload -U bashcompinit && bashcompinit
-# autoload -U compinit && compinit
-autoload -Uz compinit
-compinit -z
-
-if [[ -a "$(which vault)" ]]; then
-    autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
-fi
-
-if [[ -a "$(which terraform)" ]]; then
-    autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
-fi
-
-if [[ -a "$(which aws)" ]]; then
-    # AWS Completion
-    autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
-fi
-
 case "$OSTYPE" in
     darwin*)
         source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
@@ -222,7 +203,6 @@ case "$OSTYPE" in
         alias "xpaste=xclip -o -selection clipboard"
         ;;
 esac
-
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -244,3 +224,22 @@ fi
 # Apparently required to disable GUI gpg
 GPG_TTY=$(tty)
 export GPG_TTY
+
+# Some crazy autoloading
+# autoload -U bashcompinit && bashcompinit
+# autoload -U compinit && compinit
+autoload -Uz compinit
+compinit -z
+
+if [[ -a "$(which vault)" ]]; then
+    autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
+fi
+
+if [[ -a "$(which terraform)" ]]; then
+    autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
+fi
+
+if [[ -a "$(which aws)" ]]; then
+    # AWS Completion
+    autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
+fi

@@ -184,3 +184,28 @@ function pathClean() {
     NEWPATH=$(echo $1 | sed 's/:/\'$'\n/g' | perl -ne 'print unless $seen{$_}++' | paste -s -d':' -)
     echo "$NEWPATH"
 }
+
+function vault_portforward () {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Need a namespace and a service in that order"
+        return 1
+    else
+        namespace="$1"
+        service="$2"
+    fi
+
+    if [ -z "$4" ]; then
+        port="8200"
+    else
+        port="$4"
+    fi
+
+    if [ -z "$3" ]; then
+        cmd="kubectl port-forward -n $namespace svc/$service 8200"
+        eval "$cmd"
+    else
+        context="$3"
+        cmd="kubectl port-forward --context $context -n $namespace svc/$service 8200"
+        eval "$cmd"
+    fi
+}
