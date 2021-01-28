@@ -2,6 +2,25 @@
 
 ### FUNCTIONS ###
 
+case "$OSTYPE" in
+    darwin*)
+        alias ll='exa -la'
+        alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'
+        # Function to call IntelliJ Idea from command line at directory and passing all possible parameters
+        function idea {
+            open -a /Applications/IntelliJ\ Idea\ CE.app/Contents/MacOS/idea $@
+        }
+        # Function clear emacs Darwin
+        function osx_clear_emacs () {
+            rm /usr/local/bin/emacs*
+            rm /usr/local/bin/etags
+            rm /usr/local/bin/ebrowse
+        }
+        function gccemacs () {
+            $HOME/.nix-profile/bin/emacs "$@"
+        }
+esac
+
 # Function to clear all metals and bloop remnants
 function clear_metals () {
     if [[ -a "build.sbt" ]]; then
@@ -13,12 +32,6 @@ function clear_metals () {
     fi
 }
 
-# Function clear emacs Darwin
-function osx_clear_emacs () {
-    rm /usr/local/bin/emacs*
-    rm /usr/local/bin/etags
-    rm /usr/local/bin/ebrowse
-}
 
 # Get your current kubernetes everything
 function kubectl_namespace_cluster () {
@@ -30,15 +43,6 @@ function kubectl_namespace_cluster () {
     echo "Namespace: $namespace"
 }
 
-case "$OSTYPE" in
-    darwin*)
-        alias ll='exa -la'
-        alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'
-        # Function to call IntelliJ Idea from command line at directory and passing all possible parameters
-        function idea {
-            open -a /Applications/IntelliJ\ Idea\ CE.app/Contents/MacOS/idea $@
-        }
-esac
 
 # DGD Function for git page
 function ghp () {
@@ -136,7 +140,7 @@ function aws_unassume_role() {
     else
         echo "It exists, return to normal. Original: $PREV_KOPS_STATE_STORE" >&2
         export KOPS_STATE_STORE="$PREV_KOPS_STATE_STORE"
-    fi    
+    fi
     unset AWS_PROFILE
     unset AWS_ACCESS_KEY_ID
     unset AWS_SECRET_ACCESS_KEY
