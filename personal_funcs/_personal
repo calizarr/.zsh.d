@@ -16,8 +16,19 @@ case "$OSTYPE" in
             rm /usr/local/bin/etags
             rm /usr/local/bin/ebrowse
         }
-        function gccemacs () {
-            $HOME/.nix-profile/bin/emacs "$@"
+        # terraform sed for fun and profit
+        function format_plan {
+            awk '
+    /Terraform will perform the following actions:/ { found=1 }
+    /------------------------------------------------------------------------/ { found=0 }
+    // { if (found) { print $0 } }
+  ' |
+                (
+                    printf '<details>\n<summary>Plan for %s</summary>\n```diff\n' "$1" &&
+                        perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
+                            sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
+                        printf '```\n</details>'
+                ) | pbcopy
         }
 esac
 
@@ -212,4 +223,24 @@ function vault_portforward () {
         cmd="kubectl port-forward --context $context -n $namespace svc/$service 8200"
         eval "$cmd"
     fi
+}
+
+
+# terraform sed for fun and profit
+function format_plan {
+  awk '
+    /Terraform will perform the following actions:/ { found=1 }
+    /------------------------------------------------------------------------/ { found=0 }
+    // { if (found) { print $0 } }
+  ' |
+  (
+    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
+    perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
+    sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
+    printf '```\n</details>'
+  ) | xclip -selection clipboard
+}
+
+function add_key () {
+	vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
 }

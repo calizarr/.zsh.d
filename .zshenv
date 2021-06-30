@@ -36,6 +36,8 @@ path+=$HOME/go_workspace/bin
 path=($HOME/.pyenv/bin $path)
 # Setting the krew for kubectl PATH
 path+=${HOME}/.krew/bin
+# Adding linkerd to the PATH
+path+=${HOME}/.linkerd2/bin
 
 # export PATH=$(pathClean $PATH)
 
