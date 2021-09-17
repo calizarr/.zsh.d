@@ -124,6 +124,7 @@ eval "$(hub alias -s)"
 alias kname=kubectl_namespace_cluster
 alias kctx=kubectx
 alias kns=kubens
+alias ram="env ZENITY=/dev/null refresh-aws-mfa"
 
 # Add Functions from another file to fpath
 # Figure out how to use $fpath for this
