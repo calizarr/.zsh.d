@@ -198,8 +198,11 @@ case "$OSTYPE" in
         PS1='$(kube_ps1)'$PS1
         ;;
     linux*)
-        source "$HOME/.local/share/kube-ps1/kube-ps1.sh"
-        PS1='$(kube_ps1)'$PS1
+        KUBEPS1="$HOME/.local/share/kube-ps1/kube-ps1.sh"
+        if test -f "$KUBEPS1"; then
+            source "$HOME/.local/share/kube-ps1/kube-ps1.sh"
+            PS1='$(kube_ps1)'$PS1
+        fi
         alias "xcopy=xclip -selection clipboard"
         alias "xpaste=xclip -o -selection clipboard"
         ;;
