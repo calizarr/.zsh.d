@@ -78,8 +78,6 @@ plugins=(
     colorize
     pip
     python
-    brew
-    osx
     docker
     kubectl
 )
@@ -111,13 +109,14 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias k=kubectl
 alias -g Y="-o yaml"
 alias -g YL="-o yaml | less -R"
 alias -g PL="| less -R"
 alias -g YPL="-o yaml | yq ea -C | less"
 alias -g YPNL="-o yaml | kubectl neat | yq ea -C | less"
 alias -g EPL="2>&1 | less -R"
+alias ll="ls -lah"
+alias k=kubectl
 alias emacsnw='emacs -nw'
 alias watch='watch '
 eval "$(hub alias -s)"
@@ -150,6 +149,7 @@ eval "$(pyenv virtualenv-init -)"
 case "$OSTYPE" in
     # OSX Brew Specifics
     darwin*)
+        plugins=$("${plugins[@]}" "macos" "brew")
         export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
         source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
         source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
