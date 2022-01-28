@@ -30,10 +30,14 @@ if [[ -d "/cibo" ]];then
     path=(/cibo/shared-scripts/local /cibo/shared-scripts/local/aws_accounts $HOME/.local/bin $path)
 fi
 
+# Always add $HOME/.local/bin
+path+=$HOME/.local/bin
 # Setting the Go path
 path+=$HOME/go/bin
 path+=$HOME/go_workspace/bin
+# Pyenv Paths
 path=($HOME/.pyenv/bin $path)
+eval "$(pyenv init --path)"
 # Setting the krew for kubectl PATH
 path+=${HOME}/.krew/bin
 # Adding linkerd to the PATH
