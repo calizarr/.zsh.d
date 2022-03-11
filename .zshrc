@@ -73,13 +73,13 @@ COMPLETION_WAITING_DOTS="true"
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(git)
 plugins=(
-    git
     colored-man-pages
     colorize
     pip
     python
     docker
     kubectl
+    git
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -115,6 +115,7 @@ alias -g PL="| less -R"
 alias -g YPL="-o yaml | yq ea -C | less"
 alias -g YPNL="-o yaml | kubectl neat | yq ea -C | less"
 alias -g EPL="2>&1 | less -R"
+alias -g YCL="| yq ea - -PC | less -R"
 alias ll="ls -lah"
 alias k=kubectl
 alias emacsnw='emacs -nw'
@@ -142,14 +143,14 @@ else
 fi
 
 # Pyenv
-eval "$(pyenv init -)"
+eval "$(pyenv init -)";
 eval "$(pyenv virtualenv-init -)"
 
 # Brew specific sourcing
 case "$OSTYPE" in
     # OSX Brew Specifics
     darwin*)
-        plugins=$("${plugins[@]}" "macos" "brew")
+        plugins+=("macos" "brew")
         export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
         source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
         source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh

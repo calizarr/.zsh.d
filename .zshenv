@@ -7,6 +7,8 @@ export ZSH="$HOME/.oh-my-zsh"
 typeset -U path
 typeset -U manpath
 
+# Add pyenv options
+
 case "$OSTYPE" in
     darwin*)
         # Coreutils overriding the MAC utils
@@ -26,9 +28,11 @@ case "$OSTYPE" in
         export PYENV_ROOT="$HOME/.pyenv"
         export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init --path)"
-        # eval "$(pyenv virtualenv-init --path)"
+        eval "$(pyenv virtualenv-init --path)"
         ;;
 esac
+
+
 
 if [[ -d "/cibo" ]];then
     path=(/cibo/shared-scripts/local /cibo/shared-scripts/local/aws_accounts $HOME/.local/bin $path)
