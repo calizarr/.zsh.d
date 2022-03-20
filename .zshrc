@@ -150,7 +150,6 @@ fi
 
 # Pyenv
 eval "$(pyenv init -)";
-eval "$(pyenv virtualenv-init -)"
 
 # Brew specific sourcing
 case "$OSTYPE" in
