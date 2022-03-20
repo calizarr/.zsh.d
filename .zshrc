@@ -72,6 +72,8 @@ COMPLETION_WAITING_DOTS="true"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(git)
+# fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+
 plugins=(
     colored-man-pages
     colorize
@@ -80,6 +82,10 @@ plugins=(
     docker
     kubectl
     git
+    history-substring-search
+    zsh-autosuggestions
+    zsh-completions
+    zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -160,7 +166,6 @@ case "$OSTYPE" in
     linux*)
         if type brew &>/dev/null; then
             fpath=($(brew --prefix)/share/zsh-completions $fpath)
-            # FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
             source $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
             source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
             source $(brew --prefix)/share/zsh-history-substring-search/zsh-history-substring-search.zsh
