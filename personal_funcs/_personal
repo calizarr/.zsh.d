@@ -30,6 +30,22 @@ case "$OSTYPE" in
                         printf '```\n</details>'
                 ) | pbcopy
         }
+        ;;
+    linux*)
+        function format_plan {
+   awk '
+     /Terraform will perform the following actions:/ { found=1 }
+     /------------------------------------------------------------------------/ { found=0 }
+     // { if (found) { print $0 } }
+   ' |
+   (
+     printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
+     perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
+     sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
+     printf '```\n</details>'
+   ) | xclip -selection clipboard
+}
+               
 esac
 
 # Function to clear all metals and bloop remnants
@@ -226,21 +242,10 @@ function vault_portforward () {
 }
 
 
-# terraform sed for fun and profit
-function format_plan {
-  awk '
-    /Terraform will perform the following actions:/ { found=1 }
-    /------------------------------------------------------------------------/ { found=0 }
-    // { if (found) { print $0 } }
-  ' |
-  (
-    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
-    perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
-    sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
-    printf '```\n</details>'
-  ) | xclip -selection clipboard
-}
-
 function add_key () {
 	vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
+}
+
+function kubectl_events_sorted () {
+    kubectl get events --sort-by=.metadata.creationTimestamp
 }
