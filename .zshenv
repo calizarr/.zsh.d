@@ -38,8 +38,13 @@ if [[ -d "/cibo" ]];then
 fi
 
 # Set up GOPATH
-export GOROOT="$HOME/go"
-export GOPATH="$HOME/go_workspace"
+if [[ -d "$HOME/.goenv/" ]]; then
+    export GOENV_ROOT="$HOME/.goenv"
+    path=($GOENV_ROOT/bin $path)
+else
+    export GOROOT="$HOME/go"
+    export GOPATH="$HOME/go_workspace"
+fi
 
 # Always add $HOME/.local/bin
 path+=$HOME/.local/bin

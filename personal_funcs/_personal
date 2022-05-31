@@ -247,5 +247,25 @@ function add_key () {
 }
 
 function kubectl_events_sorted () {
-    kubectl get events --sort-by=.metadata.creationTimestamp
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    NAMESPACE=${1:-$namespace}
+    kubectl --namespace $NAMESPACE get events --sort-by=.metadata.creationTimestamp
+}
+
+function argocd_admin_login () {
+    kubectl --context aws-admin@k8s.infra.cibo.tech --namespace vault port-forward svc/vault-primary 8200 2>&1 > /dev/null &
+    PORT_JOB=$!
+    sleep 5
+    vault login -no-print -method=github token=${GITHUB_TOKEN}
+    ACCOUNT=${1:-dev}
+    COLOR=${2:-blue}
+    if [ $ACCOUNT != "dev" ]; then
+        source /cibo/shared-scripts//local/aws_accounts/aws_cross_account_assume_one_hour.sh "$ACCOUNT"
+        sleep 5
+    fi
+    cd /cibo/platform-definitions/terraform/account-${ACCOUNT}
+    password=$(../scripts/show-argocd-admin-password.sh "$COLOR")
+    kill $PORT_JOB
+    source /cibo/shared-scripts/local/aws_accounts/aws_unassume_cross_account_role.sh 
+    echo "$password"
 }

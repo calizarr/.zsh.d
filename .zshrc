@@ -152,6 +152,13 @@ fi
 eval "$(pyenv init -)";
 eval "$(pyenv virtualenv-init -)"
 
+# Goenv
+if [[ -d "$HOME/.goenv/" ]]; then
+    eval "$(goenv init -)"
+    path=($GOROOT $path)
+    path+=($GOPATH/bin)
+fi
+
 # Brew specific sourcing
 case "$OSTYPE" in
     # OSX Brew Specifics
