@@ -269,3 +269,10 @@ function argocd_admin_login () {
     source /cibo/shared-scripts/local/aws_accounts/aws_unassume_cross_account_role.sh 
     echo "$password"
 }
+
+function kubectl_delete_namespace () {
+    local namespace="$1"
+    kubectl get namespace "${namespace}" -o json > /tmp/tmp.json
+    cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp.json
+    curl -k -H "Content-Type: application/json" -X PUT --data-binary @tmp.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize
+}
