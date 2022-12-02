@@ -273,6 +273,10 @@ function argocd_admin_login () {
 function kubectl_delete_namespace () {
     local namespace="$1"
     kubectl get namespace "${namespace}" -o json > /tmp/tmp.json
-    cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp.json
-    curl -k -H "Content-Type: application/json" -X PUT --data-binary @tmp.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize
+    cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp_2.json
+    kubectl proxy &
+    PROXY_PID=$!
+    sleep 5s
+    curl -k -H "Content-Type: application/json" -X PUT --data-binary @/tmp/tmp_2.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize
+    kill -9 $PROXY_PID
 }
