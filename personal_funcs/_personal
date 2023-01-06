@@ -45,7 +45,7 @@ case "$OSTYPE" in
      printf '```\n</details>'
    ) | xclip -selection clipboard
 }
-               
+
 esac
 
 # Function to clear all metals and bloop remnants
@@ -243,7 +243,7 @@ function vault_portforward () {
 
 
 function add_key () {
-	vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
+    vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
 }
 
 function kubectl_events_sorted () {
@@ -266,17 +266,21 @@ function argocd_admin_login () {
     cd /cibo/platform-definitions/terraform/account-${ACCOUNT}
     password=$(../scripts/show-argocd-admin-password.sh "$COLOR")
     kill $PORT_JOB
-    source /cibo/shared-scripts/local/aws_accounts/aws_unassume_cross_account_role.sh 
+    source /cibo/shared-scripts/local/aws_accounts/aws_unassume_cross_account_role.sh
     echo "$password"
 }
 
 function kubectl_delete_namespace () {
-    local namespace="$1"
-    kubectl get namespace "${namespace}" -o json > /tmp/tmp.json
-    cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp_2.json
+    echo "Namespaces to ensure deletion:"
+    echo "$@"
     kubectl proxy &
     PROXY_PID=$!
     sleep 5s
-    curl -k -H "Content-Type: application/json" -X PUT --data-binary @/tmp/tmp_2.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize
+    for namespace in "$@"; do
+        echo "Deleting namespace: ${namespace}..."
+        kubectl get namespace "${namespace}" -o json > /tmp/tmp.json
+        cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp_2.json
+        curl -k -H "Content-Type: application/json" -X PUT --data-binary @/tmp/tmp_2.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize &> /dev/null
+    done
     kill -9 $PROXY_PID
 }
