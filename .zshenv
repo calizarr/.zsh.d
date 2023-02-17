@@ -58,8 +58,6 @@ path+=${HOME}/.linkerd2/bin
 
 # export PATH=$(pathClean $PATH)
 
-
-
 case "$OSTYPE" in
     darwin*)
         # Set up JAVA_HOME
@@ -79,3 +77,6 @@ export SSH_ENV="$HOME/.ssh/env"
 
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"
+
+# Set GPG Default Signing Key
+export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long| rg 'Work key for signing' -B3 | sed -n '2p' | xargs)

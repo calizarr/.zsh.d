@@ -22,7 +22,7 @@ case "$OSTYPE" in
     /Terraform will perform the following actions:/ { found=1 }
     /------------------------------------------------------------------------/ { found=0 }
     // { if (found) { print $0 } }
-  ' |
+  ' $1 |
                 (
                     printf '<details>\n<summary>Plan for %s</summary>\n```diff\n' "$1" &&
                         perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
@@ -33,19 +33,18 @@ case "$OSTYPE" in
         ;;
     linux*)
         function format_plan {
-   awk '
+            awk '
      /Terraform will perform the following actions:/ { found=1 }
      /------------------------------------------------------------------------/ { found=0 }
      // { if (found) { print $0 } }
-   ' |
-   (
-     printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
-     perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
-     sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
-     printf '```\n</details>'
-   ) | xclip -selection clipboard
-}
-
+   ' $1 |
+                (
+                    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
+                        perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
+                            sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
+                        printf '```\n</details>'
+                ) | xclip -selection clipboard
+        }
 esac
 
 # Function to clear all metals and bloop remnants
