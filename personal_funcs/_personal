@@ -283,3 +283,11 @@ function kubectl_delete_namespace () {
     done
     kill -9 $PROXY_PID
 }
+
+function kubectl_delete_pvc () {
+    echo "PVCs to ensure deletion:"
+    echo "$@"
+    for pvc in "$@"; do
+        kubectl patch pvc ${pvc} -p '{"metadata":{"finalizers":null}}'
+    done
+}

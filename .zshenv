@@ -79,4 +79,3 @@ export SSH_ENV="$HOME/.ssh/env"
 export NVM_DIR="$HOME/.nvm"
 
 # Set GPG Default Signing Key
-export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long| rg 'Work key for signing' -B3 | sed -n '2p' | xargs)

@@ -260,3 +260,5 @@ if [[ -a "$(which aws)" ]]; then
     # AWS Completion
     autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
 fi
+
+export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long| rg 'Work key for signing' -B3 | sed -n '2p' | xargs)
