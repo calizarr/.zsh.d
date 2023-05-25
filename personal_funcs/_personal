@@ -24,7 +24,7 @@ case "$OSTYPE" in
     // { if (found) { print $0 } }
   ' $1 |
                 (
-                    printf '<details>\n<summary>Plan for %s</summary>\n```diff\n' "$1" &&
+                    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$2" &&
                         perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
                             sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
                         printf '```\n</details>'
@@ -39,7 +39,7 @@ case "$OSTYPE" in
      // { if (found) { print $0 } }
    ' $1 |
                 (
-                    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$1" &&
+                    printf '<details>\n<summary>Plan for %s</summary>\n\n```diff\n' "$2" &&
                         perl -pe 's/\x1b\[[0-9;]*[mG]//g' |
                             sed -e 's/^\(  *\)\([\+-]\)/\2\1/' -e 's/^\(  *\)~/!\1/' &&
                         printf '```\n</details>'
