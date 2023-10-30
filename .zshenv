@@ -18,6 +18,7 @@ case "$OSTYPE" in
         PERL_LOCAL_LIB_ROOT="$HOME/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
         PERL_MB_OPT="--install_base \"$HOME/perl5\""; export PERL_MB_OPT;
         PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
+        export EDITOR="/Applications/Emacs.app/Contents/MacOS/Emacs -nw"
         ;;
     linux*)
         if [[ -e ~/.nix-profile/etc/profile.d/nix.sh ]]; then
@@ -73,7 +74,6 @@ export FZF_DEFAULT_COMMAND='fd -HI --type f'
 export SSH_ENV="$HOME/.ssh/env"
 
 # Default Editor
-# export EDITOR="emacs -nw"
 
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"

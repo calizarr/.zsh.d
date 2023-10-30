@@ -291,3 +291,8 @@ function kubectl_delete_pvc () {
         kubectl patch pvc ${pvc} -p '{"metadata":{"finalizers":null}}'
     done
 }
+
+function terraform_admin () {
+    export USE_GITHUB_OAUTH_TOKEN=k8s
+    ./terraform "$@"
+}
