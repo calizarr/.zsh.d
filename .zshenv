@@ -32,6 +32,10 @@ case "$OSTYPE" in
         ;;
 esac
 
+if [[ -d "$HOME/.rd/" ]]; then
+    path+=$HOME/.rd/bin
+fi
+
 if [[ -d "/cibo" ]];then
     path=(/cibo/shared-scripts/local /cibo/shared-scripts/local/aws_accounts $HOME/.local/bin $path)
     export ZENITY="no"
