@@ -19,6 +19,10 @@ case "$OSTYPE" in
         PERL_MB_OPT="--install_base \"$HOME/perl5\""; export PERL_MB_OPT;
         PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
         export EDITOR="/Applications/Emacs.app/Contents/MacOS/Emacs -nw"
+        emacs_symlink_path="/Applications/Emacs.app"
+        emacs_app=$(readlink -f ${emacs_symlink_path})
+        emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
+        path+=${emacs_path}/bin/
         ;;
     linux*)
         if [[ -e ~/.nix-profile/etc/profile.d/nix.sh ]]; then

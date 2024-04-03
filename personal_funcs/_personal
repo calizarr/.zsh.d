@@ -245,10 +245,16 @@ function add_key () {
     vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
 }
 
-function kubectl_events_sorted () {
+function k_events_sorted () {
     namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
     NAMESPACE=${1:-$namespace}
     kubectl --namespace $NAMESPACE get events --sort-by=.metadata.creationTimestamp
+}
+
+function k_watch_pods () {
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    NAMESPACE=${1:-$namespace}
+    watch kubectl --namespace $NAMESPACE get pods
 }
 
 function argocd_admin_login () {
@@ -269,7 +275,7 @@ function argocd_admin_login () {
     echo "$password"
 }
 
-function kubectl_delete_namespace () {
+function k_delete_namespace () {
     echo "Namespaces to ensure deletion:"
     echo "$@"
     kubectl proxy &
@@ -284,7 +290,7 @@ function kubectl_delete_namespace () {
     kill -9 $PROXY_PID
 }
 
-function kubectl_delete_pvc () {
+function k_delete_pvc () {
     echo "PVCs to ensure deletion:"
     echo "$@"
     for pvc in "$@"; do
@@ -295,4 +301,18 @@ function kubectl_delete_pvc () {
 function terraform_admin () {
     export USE_GITHUB_OAUTH_TOKEN=k8s
     ./terraform "$@"
+}
+
+function vault_env_specific () {
+    export VAULT_ADDR="http://localhost:9999"
+    pod=$(k -n vault get pods -l app.kubernetes.io/name=vault --no-headers | awk '{print $1}' | head -n1)
+    token=$( kubectl -n vault exec -c vault $pod -- vault write auth/kubernetes/login role=admin jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token -format=json | jq -r .auth.client_token )
+    service=$(kubectl -n vault get svc --no-headers | awk '{print $1}' | grep "vault$")
+    while true;do kubectl -n vault port-forward svc/$service 9999:8200;done &
+    sleep 5s
+     vault login -no-print  --address http://localhost:9999 token=$(echo $token)
+}
+
+function git_empty_commit() {
+    git commit --allow-empty -m "Empty-Commit"
 }
