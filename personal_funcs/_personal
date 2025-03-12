@@ -4,8 +4,7 @@
 
 case "$OSTYPE" in
     darwin*)
-        alias ll='exa -la'
-        alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'
+        alias ll='eza -lah'
         # Function to call IntelliJ Idea from command line at directory and passing all possible parameters
         function idea {
             open -a /Applications/IntelliJ\ Idea\ CE.app/Contents/MacOS/idea $@
@@ -310,9 +309,40 @@ function vault_env_specific () {
     service=$(kubectl -n vault get svc --no-headers | awk '{print $1}' | grep "vault$")
     while true;do kubectl -n vault port-forward svc/$service 9999:8200;done &
     sleep 5s
-     vault login -no-print  --address http://localhost:9999 token=$(echo $token)
+    vault login -no-print  --address http://localhost:9999 token=$(echo $token)
 }
 
 function git_empty_commit() {
     git commit --allow-empty -m "Empty-Commit"
+}
+
+function kustomize_apply_build() {
+    build_dir="$1"
+    if [[ -n "$2" ]]; then
+        namespace="$2"
+    else
+        namespace="$(kubectl config view --minify -o jsonpath='{..namespace}')"
+    fi
+
+    kustomize build "${build_dir}" | kubectl --namespace "${namespace}" apply -f -
+}
+
+function kustomize_del_build() {
+    build_dir="$1"
+    if [[ -n "$2" ]]; then
+        namespace="$2"
+    else
+        namespace="$(kubectl config view --minify -o jsonpath='{..namespace}')"
+    fi
+    kustomize build "${build_dir}" | kubectl --namespace "${namespace}" delete -f -
+}
+
+function kustomize_build_yaml() {
+    if [[ -n "$1" ]]; then
+        build_dir="$1"
+    else
+        build_dir="."
+    fi
+
+    kustomize build "${build_dir}" YCL
 }
