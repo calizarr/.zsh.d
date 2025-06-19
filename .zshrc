@@ -72,7 +72,6 @@ COMPLETION_WAITING_DOTS="true"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(git)
-# fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 
 plugins=(
     colored-man-pages
@@ -185,6 +184,8 @@ case "$OSTYPE" in
             source "${NIX_SHARE}/zsh-autosuggestions/zsh-autosuggestions.zsh"
             source "${NIX_SHARE}/zsh-history-substring-search/zsh-history-substring-search.zsh"
             source "${NIX_SHARE}/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+        else
+            fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
         fi
         ;;
 esac
@@ -248,6 +249,10 @@ export GPG_TTY
 autoload -Uz compinit
 compinit -z
 
+if [[ -a "$(which pipx)" ]]; then
+    eval $(register-python-argcomplete pipx)
+fi
+
 if [[ -a "$(which vault)" ]]; then
     autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
 fi
@@ -261,4 +266,8 @@ if [[ -a "$(which aws)" ]]; then
     autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
 fi
 
-export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long| rg 'Work key for signing' -B3 | sed -n '2p' | xargs)
+if eval "gpg -k --keyid-format=long | rg 'Work key for signing' -B3";then
+    export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long | rg 'Work key for signing' -B3 | sed -n '2p' | xargs)
+else
+    export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long | rg 'Personal Key' -B3 | sed -n '2p' | xargs)
+fi

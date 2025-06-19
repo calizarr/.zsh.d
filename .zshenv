@@ -55,6 +55,11 @@ else
     export GOPATH="$HOME/go_workspace"
 fi
 
+# Set up cargo
+if [[ -d "$HOME/.cargo/" ]]; then
+    source "$HOME/.cargo/env"
+fi
+
 # Always add $HOME/.local/bin
 path+=$HOME/.local/bin
 # Setting the Go path
