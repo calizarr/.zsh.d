@@ -225,7 +225,7 @@ esac
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# export EDITOR="emacs -nw -q"
+export EDITOR="emacs -nw"
 
 setopt no_aliases
 

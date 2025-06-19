@@ -91,4 +91,4 @@ export SSH_ENV="$HOME/.ssh/env"
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"
 
-# Set GPG Default Signing Key
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/bin"}
