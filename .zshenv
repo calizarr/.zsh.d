@@ -91,4 +91,9 @@ export SSH_ENV="$HOME/.ssh/env"
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"
 
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/bin"}
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-/usr/local/lib}"
+
+if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
+    GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
+    export GITHUB_REPOS="$HOME/$GITHUB_REPO_DIR_NAME"
+fi
