@@ -23,6 +23,7 @@ case "$OSTYPE" in
         emacs_app=$(readlink -f ${emacs_symlink_path})
         emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
         path+=${emacs_path}/bin/
+        alias grep="ggrep "
         ;;
     linux*)
         if [[ -e ~/.nix-profile/etc/profile.d/nix.sh ]]; then
