@@ -316,7 +316,7 @@ function git_empty_commit() {
     git commit --allow-empty -m "Empty-Commit"
 }
 
-function kustomize_apply_build() {
+function k_apply_build() {
     build_dir="$1"
     if [[ -n "$2" ]]; then
         namespace="$2"
@@ -327,7 +327,7 @@ function kustomize_apply_build() {
     kustomize build "${build_dir}" | kubectl --namespace "${namespace}" apply -f -
 }
 
-function kustomize_del_build() {
+function k_del_build() {
     build_dir="$1"
     if [[ -n "$2" ]]; then
         namespace="$2"
@@ -337,7 +337,7 @@ function kustomize_del_build() {
     kustomize build "${build_dir}" | kubectl --namespace "${namespace}" delete -f -
 }
 
-function kustomize_build_yaml() {
+function k_build_yaml() {
     if [[ -n "$1" ]]; then
         build_dir="$1"
     else
