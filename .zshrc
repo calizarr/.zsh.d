@@ -9,6 +9,7 @@ source ${ZDOTDIR}/.zshenv
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 # ZSH_THEME="clean"
+echo "Loading the themes..."
 ZSH_THEME="agnoster"
 DEFAULT_USER=$(whoami)
 prompt_context(){}
@@ -73,6 +74,7 @@ COMPLETION_WAITING_DOTS="true"
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(git)
 
+echo "loading plugins"
 plugins=(
     colored-man-pages
     colorize
@@ -163,10 +165,12 @@ case "$OSTYPE" in
     # OSX Brew Specifics
     darwin*)
         plugins+=("macos" "brew")
-        export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
-        source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-        source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-        source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+        # export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
+        # source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+        # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+        # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+        fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+
         ;;
     # Linux Brew Specifics
     linux*)
@@ -175,7 +179,7 @@ case "$OSTYPE" in
             source $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
             source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
             source $(brew --prefix)/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-            source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh                    
+            source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
             autoload -Uz compinit
             compinit
         elif type nix-env &>/dev/null; then

@@ -1,5 +1,5 @@
 # .zshenv should be used for environment variables etc
-# echo "Loading internal $ZDOTDIR/.zshenv..."
+echo "Loading internal $ZDOTDIR/.zshenv..."
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -12,17 +12,17 @@ typeset -U manpath
 case "$OSTYPE" in
     darwin*)
         # Coreutils overriding the MAC utils
-        path=($HOME/perl5/bin /usr/local/Cellar/gnu-getopt/2.33.2/bin /usr/local/opt/coreutils/libexec/gnubin $path)
+        path=(/usr/local/opt/coreutils/libexec/gnubin $path)
         manpath=(/usr/local/opt/coreutils/libexec/gnuman $manpath)
-        PERL5LIB="$HOME/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
-        PERL_LOCAL_LIB_ROOT="$HOME/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
-        PERL_MB_OPT="--install_base \"$HOME/perl5\""; export PERL_MB_OPT;
-        PERL_MM_OPT="INSTALL_BASE=$HOME/perl5"; export PERL_MM_OPT;
-        export EDITOR="/Applications/Emacs.app/Contents/MacOS/Emacs -nw"
-        emacs_symlink_path="/Applications/Emacs.app"
-        emacs_app=$(readlink -f ${emacs_symlink_path})
-        emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
-        path+=${emacs_path}/bin/
+        # Removing some issues with autofill, lagginess etc.
+        defaults write -g NSAutoFillHeuristicControllerEnabled -bool false
+        # Same thing but for chrome until Mac fixes it
+        launchctl setenv CHROME_HEADLESS 1
+        # export EDITOR="/Applications/Emacs.app/Contents/MacOS/Emacs -nw"
+        # emacs_symlink_path="/Applications/Emacs.app"
+        # emacs_app=$(readlink -f ${emacs_symlink_path})
+        # emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
+        # path+=${emacs_path}/bin/
         alias grep="ggrep "
         ;;
     linux*)
@@ -73,11 +73,11 @@ path+=${HOME}/.linkerd2/bin
 
 # export PATH=$(pathClean $PATH)
 
-case "$OSTYPE" in
-    darwin*)
-        # Set up JAVA_HOME
-        export JAVA_HOME=$(/usr/libexec/java_home -v 11)
-esac
+#case "$OSTYPE" in
+#    darwin*)
+#        # Set up JAVA_HOME
+#        export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+#esac
 
 # Setting default FZF ops
 export FZF_DEFAULT_OPTS="--border --height=50%"
