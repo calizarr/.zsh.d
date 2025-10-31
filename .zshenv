@@ -7,7 +7,12 @@ export ZSH="$HOME/.oh-my-zsh"
 typeset -U path
 typeset -U manpath
 
-# Add pyenv options
+# Always add $HOME/.local/bin
+LOCAL_BIN="$HOME/.local/bin"
+if [[ -d "$LOCAL_BIN" ]]; then
+    mkdir -p "$LOCAL_BIN"
+fi
+path=($HOME/.local/bin $path)
 
 case "$OSTYPE" in
     darwin*)
@@ -37,58 +42,49 @@ case "$OSTYPE" in
         ;;
 esac
 
-if [[ -d "$HOME/.rd/" ]]; then
-    path+=$HOME/.rd/bin
+rd_path="$HOME/.rd"
+
+if [[ -d "${rd_path}" ]]; then
+    path+=${rd_path}/bin
 fi
 
-if [[ -d "/cibo" ]];then
-    path=(/cibo/shared-scripts/local /cibo/shared-scripts/local/aws_accounts $HOME/.local/bin $path)
-    export ZENITY="no"
-    export OSASCRIPT="no"
-fi
-
-# Set up GOPATH
-if [[ -d "$HOME/.goenv/" ]]; then
-    export GOENV_ROOT="$HOME/.goenv"
-    path=($GOENV_ROOT/bin $path)
-else
-    export GOROOT="$HOME/go"
-    export GOPATH="$HOME/go_workspace"
-fi
+# # Set up GOPATH
+# if [[ -d "$HOME/.goenv/" ]]; then
+#     export GOENV_ROOT="$HOME/.goenv"
+#     path=($GOENV_ROOT/bin $path)
+# else
+#     export GOROOT="$HOME/go"
+#     export GOPATH="$HOME/go_workspace"
+# fi
 
 # Set up cargo
-if [[ -d "$HOME/.cargo/" ]]; then
-    source "$HOME/.cargo/env"
+cargo_path="$HOME/.cargo"
+if [[ -d "${cargo_path}" ]]; then
+    source "${cargo_path}/env"
 fi
 
-# Always add $HOME/.local/bin
-path+=$HOME/.local/bin
-# Setting the Go path
-path+=$HOME/$GOROOT/bin
-path+=$HOME/$GOPATH/bin
-# Setting the krew for kubectl PATH
-path+=${HOME}/.krew/bin
-# Adding linkerd to the PATH
-path+=${HOME}/.linkerd2/bin
+krew_path="$HOME/.krew"
+if [[ -d "${krew_path}" ]]; then
+    path+=${krew_path}/bin
+fi
+
+if [[ -d "$HOME/.linkerd2" ]]; then
+    path+=${HOME}/.linkerd2/bin
+fi
 
 # export PATH=$(pathClean $PATH)
-
-#case "$OSTYPE" in
-#    darwin*)
-#        # Set up JAVA_HOME
-#        export JAVA_HOME=$(/usr/libexec/java_home -v 11)
-#esac
 
 # Setting default FZF ops
 export FZF_DEFAULT_OPTS="--border --height=50%"
 export FZF_DEFAULT_COMMAND='fd -HI --type f'
 
 # SSH SETTINGS.
-
+if [[ -d "$HOME/.ssh/" ]]; then
+    mkdir -p "$HOME/.ssh/"
+fi
 export SSH_ENV="$HOME/.ssh/env"
 
 # Default Editor
-
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"
 

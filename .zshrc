@@ -9,7 +9,7 @@ source ${ZDOTDIR}/.zshenv
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 # ZSH_THEME="clean"
-echo "Loading the themes..."
+# echo "Loading the themes..."
 ZSH_THEME="agnoster"
 DEFAULT_USER=$(whoami)
 prompt_context(){}
@@ -131,7 +131,6 @@ eval "$(hub alias -s)"
 alias kname=kubectl_namespace_cluster
 alias kctx=kubectx
 alias kns=kubens
-alias ram="env ZENITY=/dev/null refresh-aws-mfa"
 
 # Add Functions from another file to fpath
 # Figure out how to use $fpath for this
@@ -169,7 +168,7 @@ case "$OSTYPE" in
         # source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
         # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
         # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-        fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+        # fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 
         ;;
     # Linux Brew Specifics
@@ -231,13 +230,13 @@ esac
 
 export EDITOR="emacs -nw"
 
+# Setting up NVM
 setopt no_aliases
-
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 setopt aliases
 
+# Setting up SDKMAN
 if [[ -d "$HOME/.sdkman/" ]]; then
     export SDKMAN_DIR="$HOME/.sdkman"
     [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
