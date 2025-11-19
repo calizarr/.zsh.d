@@ -31,11 +31,6 @@ case "$OSTYPE" in
         alias grep="ggrep "
         ;;
     linux*)
-        if [[ -e ~/.nix-profile/etc/profile.d/nix.sh ]]; then
-            source ~/.nix-profile/etc/profile.d/nix.sh
-            # export LOCALE_ARCHIVE=$(nix-env --installed --no-name --out-path --query glibc-locales)/lib/locale/locale-archive
-            export LOCALE_ARCHIVE="/usr/lib/locale/locale-archive"
-        fi
         export PYENV_ROOT="$HOME/.pyenv"
         export PATH="$PYENV_ROOT/bin:$PATH"
         eval "$(pyenv init --path)"
@@ -48,14 +43,14 @@ if [[ -d "${rd_path}" ]]; then
     path+=${rd_path}/bin
 fi
 
-# # Set up GOPATH
-# if [[ -d "$HOME/.goenv/" ]]; then
-#     export GOENV_ROOT="$HOME/.goenv"
-#     path=($GOENV_ROOT/bin $path)
-# else
-#     export GOROOT="$HOME/go"
-#     export GOPATH="$HOME/go_workspace"
-# fi
+# Set up GOPATH
+if [[ -d "$HOME/.goenv/" ]]; then
+    export GOENV_ROOT="$HOME/.goenv"
+    path=($GOENV_ROOT/bin $path)
+else
+    export GOROOT="$HOME/go"
+    export GOPATH="$HOME/go_workspace"
+fi
 
 # Set up cargo
 cargo_path="$HOME/.cargo"
@@ -66,10 +61,6 @@ fi
 krew_path="$HOME/.krew"
 if [[ -d "${krew_path}" ]]; then
     path+=${krew_path}/bin
-fi
-
-if [[ -d "$HOME/.linkerd2" ]]; then
-    path+=${HOME}/.linkerd2/bin
 fi
 
 # export PATH=$(pathClean $PATH)
@@ -85,6 +76,8 @@ fi
 export SSH_ENV="$HOME/.ssh/env"
 
 # Default Editor
+export EDITOR="emacs -nw"
+
 # NVM, Nodejs, NPM
 export NVM_DIR="$HOME/.nvm"
 

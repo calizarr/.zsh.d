@@ -80,7 +80,6 @@ plugins=(
     colorize
     pip
     python
-    docker
     kubectl
     git
     history-substring-search
@@ -88,9 +87,6 @@ plugins=(
     zsh-completions
     zsh-syntax-highlighting
 )
-
-source $ZSH/oh-my-zsh.sh
-
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -132,10 +128,11 @@ alias kname=kubectl_namespace_cluster
 alias kctx=kubectx
 alias kns=kubens
 
+USER_SITEFUNCTIONS="$HOME/.local/share/zsh/site-functions/"
 # Add Functions from another file to fpath
 # Figure out how to use $fpath for this
-typeset -U fpath
-source $ZDOTDIR/personal_funcs/_personal
+fpath=( $USER_SITEFUNCTIONS $fpath )
+fpath+="$ZDOTDIR/personal_funcs/_personal"
 
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
@@ -169,27 +166,6 @@ case "$OSTYPE" in
         # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
         # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
         # fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
-
-        ;;
-    # Linux Brew Specifics
-    linux*)
-        if type brew &>/dev/null; then
-            fpath=($(brew --prefix)/share/zsh-completions $fpath)
-            source $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
-            source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-            source $(brew --prefix)/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-            source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-            autoload -Uz compinit
-            compinit
-        elif type nix-env &>/dev/null; then
-            NIX_SHARE="$HOME/.nix-profile/share"
-            fpath=("${NIX_SHARE}/zsh/site-functions/" $fpath)
-            source "${NIX_SHARE}/zsh-autosuggestions/zsh-autosuggestions.zsh"
-            source "${NIX_SHARE}/zsh-history-substring-search/zsh-history-substring-search.zsh"
-            source "${NIX_SHARE}/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-        else
-            fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
-        fi
         ;;
 esac
 
@@ -225,11 +201,6 @@ case "$OSTYPE" in
         ;;
 esac
 
-# fzf
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-export EDITOR="emacs -nw"
-
 # Setting up NVM
 setopt no_aliases
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -249,29 +220,55 @@ export GPG_TTY
 # Some crazy autoloading
 # autoload -U bashcompinit && bashcompinit
 # autoload -U compinit && compinit
-autoload -Uz compinit
-compinit -z
 
 if [[ -a "$(which pipx)" ]]; then
     eval $(register-python-argcomplete pipx)
 fi
 
 if [[ -a "$(which vault)" ]]; then
-    autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
+    # autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
+    complete -C '$(which vault)' vault
 fi
 
 if [[ -a "$(which terraform)" ]]; then
-    autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
+    # autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
+    complete -C '$(which terraform)' terraform
 fi
 
 if [[ -a "$(which aws)" ]]; then
     # AWS Completion
-    autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
+    # autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
+    complete -C '$(which aws_completer)' aws
 fi
 
+HELM_SF="$USER_SITEFUNCTIONS/_helm"
+if [[ -a "$(which helm)" ]] && [ ! -f "$HELM_SF" ]; then
+    helm completion zsh > "$HELM_SF"
+fi
+
+KUSTOMIZE_SF="$USER_SITEFUNCTIONS/_kustomize"
+if [[ -a "$(which kustomize)" ]] && [ ! -f "$KUSTOMIZE_SF" ]; then
+    kustomize completion zsh > "$KUSTOMIZE_SF"
+fi
+
+if [[ -a "$(which microk8s.kubectl)" ]]; then
+    MK8S_SF="$USER_SITEFUNCTIONS/_microk8s.kubectl"
+    microk8s.kubectl completion zsh | sed 's/kubectl/microk8s.kubectl/g' > "$MK8S_SF"
+    alias mk="microk8s.kubectl "
+    MKH_SF="$USER_SITEFUNCTIONS/_microk8s.helm"
+    microk8s.helm completion zsh | sed 's/helm/microk8s.helm/g' > "$MKH_SF"
+    alias mh="microk8s.helm "
+fi
 
 if eval "gpg -k --keyid-format=long | rg 'Work key for signing' -B3" > /dev/null;then
     export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long | rg 'Work key for signing' -B3 | sed -n '2p' | xargs)
 else
     export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long | rg 'Personal Key' -B3 | sed -n '2p' | xargs)
 fi
+
+autoload -Uz compinit
+compinit -z
+source $ZSH/oh-my-zsh.sh
+
+# fzf
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
