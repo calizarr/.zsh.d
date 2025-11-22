@@ -253,7 +253,7 @@ function k_events_sorted () {
 function k_watch_pods () {
     namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
     NAMESPACE=${1:-$namespace}
-    watch kubectl --namespace $NAMESPACE get pods
+    watch kubectl --namespace $NAMESPACE get pods -o wide
 }
 
 function argocd_admin_login () {
@@ -347,7 +347,6 @@ function k_build_yaml() {
     kustomize build "${build_dir}" YCL
 }
 
-
 function k_get_schema() {
     SCHEMA=${$1:clusterschema.json}
     kubectl get raw /openapi/v2 > "$SCHEMA"
@@ -361,4 +360,16 @@ function helm_values() {
 
 function helm_dir_values() {
     find . -name "*values*" -type d | xargs -I{} find {} -name "*.yaml" | xargs -I {} echo -f {} | xargs
+}
+
+# Functions to use CLI binaries directly from the k8s pod rather than local installation
+
+function linstor() {
+    controller_pod="$(kubectl -n piraeus-operator get pods -l app.kubernetes.io/component=linstor-controller -o yaml | yq ea '.items[0].metadata.name')"
+    kubectl -n piraeus-operator exec -it ${controller_pod} -- linstor "$@"
+}
+
+function mc_grafana() {
+    minio_pod="grafana-minio-standalone-0"
+    kubectl -n monitoring exec -it ${minio_pod} -- mc --config-dir /tmp/minio "$@"
 }
