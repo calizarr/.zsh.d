@@ -346,3 +346,19 @@ function k_build_yaml() {
 
     kustomize build "${build_dir}" YCL
 }
+
+
+function k_get_schema() {
+    SCHEMA=${$1:clusterschema.json}
+    kubectl get raw /openapi/v2 > "$SCHEMA"
+}
+
+# For future, selecting of a specific schema: openapi2jsonschema standalone kubernetes expanded clusterschema.json o ./schemas_directory
+
+function helm_values() {
+    echo $(ls -lah | rg 'values' | awk '{print $9}' | xargs -I{} echo -f {} | xargs)
+}
+
+function helm_dir_values() {
+    find . -name "*values*" -type d | xargs -I{} find {} -name "*.yaml" | xargs -I {} echo -f {} | xargs
+}

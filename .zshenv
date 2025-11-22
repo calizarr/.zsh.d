@@ -1,5 +1,5 @@
 # .zshenv should be used for environment variables etc
-echo "Loading internal $ZDOTDIR/.zshenv..."
+# echo "Loading internal $ZDOTDIR/.zshenv..."
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -31,9 +31,7 @@ case "$OSTYPE" in
         alias grep="ggrep "
         ;;
     linux*)
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
-        eval "$(pyenv init --path)"
+
         ;;
 esac
 
@@ -41,6 +39,12 @@ rd_path="$HOME/.rd"
 
 if [[ -d "${rd_path}" ]]; then
     path+=${rd_path}/bin
+fi
+
+if [[ -d "$HOME/.pyenv/" ]]; then
+    export PYENV_ROOT="$HOME/.pyenv"
+    path=( $PYENV_ROOT/bin $path )
+    eval "$(pyenv init --path)"
 fi
 
 # Set up GOPATH

@@ -1,5 +1,4 @@
-echo "Loading internal ${ZDOTDIR}/.zshrc..."
-source ${ZDOTDIR}/.zshenv
+# echo "Loading internal ${ZDOTDIR}/.zshrc..."
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -81,6 +80,7 @@ plugins=(
     pip
     python
     kubectl
+    kube-ps1
     git
     history-substring-search
     zsh-autosuggestions
@@ -129,10 +129,12 @@ alias kctx=kubectx
 alias kns=kubens
 
 USER_SITEFUNCTIONS="$HOME/.local/share/zsh/site-functions/"
-# Add Functions from another file to fpath
-# Figure out how to use $fpath for this
 fpath=( $USER_SITEFUNCTIONS $fpath )
-fpath+="$ZDOTDIR/personal_funcs/_personal"
+
+# Add Functions from another file to fpath
+# Figure out how to use $fpath for this, it's a bit more complicated, source file for now
+# fpath+="$ZDOTDIR/personal_funcs/_personal"
+source "$ZDOTDIR/personal_funcs/_personal"
 
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
@@ -186,20 +188,12 @@ TOKENS_FILE="$HOME/tokens/github_tokens.zsh"
 test -e $TOKENS_FILE && source $TOKENS_FILE
 
 case "$OSTYPE" in
-    darwin*)
-        source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
-        PS1='$(kube_ps1)'$PS1
-        ;;
     linux*)
-        KUBEPS1="$HOME/.local/share/kube-ps1/kube-ps1.sh"
-        if test -f "$KUBEPS1"; then
-            source "$HOME/.local/share/kube-ps1/kube-ps1.sh"
-            PS1='$(kube_ps1)'$PS1
-        fi
         alias "xcopy=xclip -selection clipboard"
         alias "xpaste=xclip -o -selection clipboard"
         ;;
 esac
+
 
 # Setting up NVM
 setopt no_aliases
@@ -268,7 +262,10 @@ fi
 
 autoload -Uz compinit
 compinit -z
+fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 source $ZSH/oh-my-zsh.sh
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+PROMPT='$(kube_ps1)'$PROMPT
