@@ -73,7 +73,7 @@ COMPLETION_WAITING_DOTS="true"
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(git)
 
-echo "loading plugins"
+# echo "loading plugins"
 plugins=(
     colored-man-pages
     colorize
@@ -127,13 +127,12 @@ eval "$(hub alias -s)"
 alias kname=kubectl_namespace_cluster
 alias kctx=kubectx
 alias kns=kubens
+alias grep="ggrep "
 
 USER_SITEFUNCTIONS="$HOME/.local/share/zsh/site-functions/"
 fpath=( $USER_SITEFUNCTIONS $fpath )
-
 # Add Functions from another file to fpath
 # Figure out how to use $fpath for this, it's a bit more complicated, source file for now
-# fpath+="$ZDOTDIR/personal_funcs/_personal"
 source "$ZDOTDIR/personal_funcs/_personal"
 
 # Source SSH settings, if applicable
@@ -252,6 +251,11 @@ if [[ -a "$(which microk8s.kubectl)" ]]; then
     MKH_SF="$USER_SITEFUNCTIONS/_microk8s.helm"
     microk8s.helm completion zsh | sed 's/helm/microk8s.helm/g' > "$MKH_SF"
     alias mh="microk8s.helm "
+fi
+
+if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
+    GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
+    export GITHUB_REPOS="$HOME/$GITHUB_REPO_DIR_NAME"
 fi
 
 if eval "gpg -k --keyid-format=long | rg 'Work key for signing' -B3" > /dev/null;then

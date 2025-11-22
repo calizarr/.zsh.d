@@ -28,7 +28,6 @@ case "$OSTYPE" in
         # emacs_app=$(readlink -f ${emacs_symlink_path})
         # emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
         # path+=${emacs_path}/bin/
-        alias grep="ggrep "
         ;;
     linux*)
 
@@ -86,8 +85,3 @@ export EDITOR="emacs -nw"
 export NVM_DIR="$HOME/.nvm"
 
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-/usr/local/lib}"
-
-if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
-    GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
-    export GITHUB_REPOS="$HOME/$GITHUB_REPO_DIR_NAME"
-fi
