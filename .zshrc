@@ -127,7 +127,7 @@ eval "$(hub alias -s)"
 alias kname=kubectl_namespace_cluster
 alias kctx=kubectx
 alias kns=kubens
-
+alias grep="ggrep "
 
 USER_SITEFUNCTIONS="$HOME/.local/share/zsh/site-functions/"
 fpath=( $USER_SITEFUNCTIONS $fpath )
@@ -167,7 +167,6 @@ case "$OSTYPE" in
         # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
         # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
         # fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
-        alias grep="ggrep "
         ;;
 esac
 
