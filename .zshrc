@@ -167,6 +167,7 @@ case "$OSTYPE" in
         # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
         # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
         # fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+        source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
         ;;
 esac
 
