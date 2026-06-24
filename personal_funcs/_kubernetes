@@ -1,0 +1,166 @@
+#!/usr/bin/env zsh
+
+# Kubernetes Functions
+
+# Get your current kubernetes everything
+function kubectl_namespace_cluster () {
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    cluster=`kubectl config view --minify --output 'jsonpath={.clusters[0].name}'`
+    context=`kubectl config view --minify --output 'jsonpath={.contexts[0].name}'`
+    echo "Cluster: $cluster"
+    echo "Context: $context"
+    echo "Namespace: $namespace"
+}
+
+function k_events_sorted () {
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    NAMESPACE=${1:-$namespace}
+    kubectl --namespace $NAMESPACE get events --sort-by=.metadata.creationTimestamp
+}
+
+function k_watch_pods () {
+    namespace=`kubectl config view --minify --output 'jsonpath={..namespace}'`
+    NAMESPACE=${1:-$namespace}
+    watch kubectl --namespace $NAMESPACE get pods -o wide
+}
+
+function argocd_admin_login () {
+    kubectl --context aws-admin@k8s.infra.cibo.tech --namespace vault port-forward svc/vault-primary 8200 2>&1 > /dev/null &
+    PORT_JOB=$!
+    sleep 5
+    vault login -no-print -method=github token=${GITHUB_TOKEN}
+    ACCOUNT=${1:-dev}
+    COLOR=${2:-blue}
+    if [ $ACCOUNT != "dev" ]; then
+        source /cibo/shared-scripts//local/aws_accounts/aws_cross_account_assume_one_hour.sh "$ACCOUNT"
+        sleep 5
+    fi
+    cd /cibo/platform-definitions/terraform/account-${ACCOUNT}
+    password=$(../scripts/show-argocd-admin-password.sh "$COLOR")
+    kill $PORT_JOB
+    source /cibo/shared-scripts/local/aws_accounts/aws_unassume_cross_account_role.sh
+    echo "$password"
+}
+
+function k_delete_namespace () {
+    echo "Namespaces to ensure deletion:"
+    echo "$@"
+    kubectl proxy &
+    PROXY_PID=$!
+    sleep 5s
+    for namespace in "$@"; do
+        echo "Deleting namespace: ${namespace}..."
+        kubectl get namespace "${namespace}" -o json > /tmp/tmp.json
+        cat /tmp/tmp.json | jq 'del(.spec)' > /tmp/tmp_2.json
+        curl -k -H "Content-Type: application/json" -X PUT --data-binary @/tmp/tmp_2.json http://127.0.0.1:8001/api/v1/namespaces/${namespace}/finalize &> /dev/null
+    done
+    kill -9 $PROXY_PID
+}
+
+function k_delete_pvc () {
+    echo "PVCs to ensure deletion:"
+    echo "$@"
+    for pvc in "$@"; do
+        kubectl patch pvc ${pvc} -p '{"metadata":{"finalizers":null}}'
+    done
+}
+
+function vault_env_specific () {
+    export VAULT_ADDR="http://localhost:9999"
+    pod=$(k -n vault get pods -l app.kubernetes.io/name=vault --no-headers | awk '{print $1}' | head -n1)
+    token=$( kubectl -n vault exec -c vault $pod -- vault write auth/kubernetes/login role=admin jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token -format=json | jq -r .auth.client_token )
+    service=$(kubectl -n vault get svc --no-headers | awk '{print $1}' | grep "vault$")
+    while true;do kubectl -n vault port-forward svc/$service 9999:8200;done &
+    sleep 5s
+    vault login -no-print  --address http://localhost:9999 token=$(echo $token)
+}
+
+
+
+function k_apply_build() {
+    build_dir="$1"
+    if [[ -n "$2" ]]; then
+        namespace="$2"
+    else
+        namespace="$(kubectl config view --minify -o jsonpath='{..namespace}')"
+    fi
+
+    kustomize build "${build_dir}" | kubectl --namespace "${namespace}" apply -f -
+}
+
+function k_del_build() {
+    build_dir="$1"
+    if [[ -n "$2" ]]; then
+        namespace="$2"
+    else
+        namespace="$(kubectl config view --minify -o jsonpath='{..namespace}')"
+    fi
+    kustomize build "${build_dir}" | kubectl --namespace "${namespace}" delete -f -
+}
+
+function k_build_yaml() {
+    if [[ -n "$1" ]]; then
+        build_dir="$1"
+    else
+        build_dir="."
+    fi
+
+    kustomize build "${build_dir}" YCL
+}
+
+function k_get_schema() {
+    SCHEMA=${$1:clusterschema.json}
+    kubectl get raw /openapi/v2 > "$SCHEMA"
+}
+
+# For future, selecting of a specific schema: openapi2jsonschema standalone kubernetes expanded clusterschema.json o ./schemas_directory
+
+function helm_values() {
+    echo $(ls -lah | rg 'values' | awk '{print $9}' | xargs -I{} echo -f {} | xargs)
+}
+
+function helm_dir_values() {
+    find . -name "*values*" -type d | xargs -I{} find {} -name "*.yaml" | xargs -I {} echo -f {} | xargs
+}
+
+# Functions to use CLI binaries directly from the k8s pod rather than local installation
+function linstor() {
+    controller_pod="$(kubectl -n piraeus-operator get pods -l app.kubernetes.io/component=linstor-controller -o yaml | yq ea '.items[0].metadata.name')"
+    kubectl -n piraeus-operator exec -it ${controller_pod} -- linstor "$@"
+}
+
+function mc_grafana() {
+    minio_pod="grafana-minio-standalone-0"
+    kubectl -n monitoring exec -it ${minio_pod} -- mc --config-dir /tmp/minio "$@"
+}
+
+# Vault functions
+function vault_portforward () {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Need a namespace and a service in that order"
+        return 1
+    else
+        namespace="$1"
+        service="$2"
+    fi
+
+    if [ -z "$4" ]; then
+        port="8200"
+    else
+        port="$4"
+    fi
+
+    if [ -z "$3" ]; then
+        cmd="kubectl port-forward -n $namespace svc/$service 8200"
+        eval "$cmd"
+    else
+        context="$3"
+        cmd="kubectl port-forward --context $context -n $namespace svc/$service 8200"
+        eval "$cmd"
+    fi
+}
+
+function add_key () {
+    vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
+}
+

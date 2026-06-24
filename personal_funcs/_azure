@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+function az_switch_sub() {
+    az account set --subscription "$1"
+}
+
+function aks_list() {
+    az aks list -o table
+}
+
+function aks_get_creds() {
+    az aks get-credentials --subscription "$1" --resource-group "$2" --name "$3" --context "$3" --overwrite-existing >/dev/null
+}
+
+function aks_write_all_creds_sub() {
+    current_sub="$(az account show -o json | jq -r '.id')"
+    aks_list_json="$(az aks list)"
+    # ZSH only
+    creds=("${(f)$(echo $aks_list_json | jq -r --arg sub "$current_sub" '.[] | "az aks get-credentials --subscription \($sub) --resource-group \(.resourceGroup) --name \(.name) --context \(.name) --overwrite-existing"')}")
+    for cred in "${creds[@]}"; do
+        eval "$cred"
+    done
+}
