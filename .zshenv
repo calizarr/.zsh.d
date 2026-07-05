@@ -84,3 +84,6 @@ export EDITOR="emacs -nw"
 export NVM_DIR="$HOME/.nvm"
 
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-/usr/local/lib}"
+
+# Add to XDG_DATA_DIRS
+export XDG_DATA_DIRS="${XDG_DATA_DIRS}:${HOME}/.local/share"
