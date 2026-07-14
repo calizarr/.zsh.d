@@ -1,0 +1,5 @@
+function pw_reload() {
+    systemctl --user stop pipewire.service pipewire-pulse.service pipewire.socket pipewire-pulse.socket wireplumber.service
+    systemctl --user daemon-reload
+    systemctl --user restart pipewire.service pipewire-pulse.service pipewire.socket pipewire-pulse.socket wireplumber.service
+}
