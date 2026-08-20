@@ -1,0 +1,146 @@
+#!/usr/bin/env zsh
+
+# Pulumi Functions
+
+# Run a pulumi command against one of the highlander pulumi projects, without having
+# to remember which pnpm package and which per-project script wraps it.
+#
+#   pulumi_deploy <target> [pulumi args...]
+#
+# Targets (aliases in parens):
+#   cloudflare              @magi/infra-cloudflare   stack mavenagi/cloudflare
+#   datadog                 datadog                  stack mavenagi/datadog/main
+#   integration-us1 (int)   @magi/infra-kubernetes   stack mavenagi/kubernetes/integration
+#   staging-us1 (staging)   @magi/infra-kubernetes   stack mavenagi/kubernetes/staging
+#   prod-us1 (prod)         @magi/infra-kubernetes   stack mavenagi/kubernetes/prod
+#
+# Everything after the target is passed straight through, so:
+#   pulumi_deploy staging-us1 preview --diff
+#   pulumi_deploy prod-us1 up --refresh
+#   pulumi_deploy cloudflare preview --diff --target 'urn:pulumi:cloudflare::...'
+#
+# Each project's script wraps pulumi in `op run --env-file ...`, so a live 1Password
+# session is required; `op signin` first if you get "authorization timeout".
+#
+# Before running, the target is checked against `kubectl config current-context` --
+# mutating commands are refused on a mismatch. See _pulumi_deploy_check_context below.
+
+# DEVOP-2086: a Pulumi resource declared WITHOUT an explicit `provider` falls back to
+# Pulumi's default kubernetes provider, which resolves the ambient kubeconfig
+# current-context instead of the stack's cluster. On 2026-08-12 a staging `up` run from
+# a shell pointed at aks-prod wrote staging's Datadog config into PROD, which wedged 11
+# of 31 prod Datadog agents for 7 days and merged a second env tag onto prod metrics.
+# The IaC hole is fixed, but this guard is what protects resources nobody has written
+# yet -- it costs one local file read.
+typeset -gA _PULUMI_DEPLOY_EXPECTED_CTX=(
+    integration-us1 aks-integration
+    staging-us1     aks-staging
+    prod-us1        aks-prod
+)
+
+function _pulumi_deploy_check_context () {
+    local target="$1"; shift
+    local expected="${_PULUMI_DEPLOY_EXPECTED_CTX[$target]}"
+
+    # cloudflare / datadog manage no kubernetes objects -- nothing to guard.
+    [[ -z "$expected" ]] && return 0
+    [[ -n "$PULUMI_DEPLOY_SKIP_CONTEXT_CHECK" ]] && return 0
+
+    local verb="$1"
+    local mutating=0
+    case "$verb" in
+        up|destroy|refresh|import|cancel|state) mutating=1 ;;
+    esac
+
+    # A local kubeconfig read, not an API call -- no timeout needed.
+    local current
+    current="$(kubectl config current-context 2>/dev/null)"
+
+    [[ "$current" == "$expected" ]] && return 0
+
+    print -u2 ""
+    print -u2 "pulumi_deploy: kube-context mismatch"
+    print -u2 "    target:          $target"
+    print -u2 "    expects context: $expected"
+    print -u2 "    current context: ${current:-<none>}"
+    print -u2 ""
+
+    if (( mutating )); then
+        print -u2 "  Refusing to run 'pulumi $verb'. Any resource missing an explicit provider"
+        print -u2 "  would be written to '${current:-<none>}' instead of '$expected'."
+        print -u2 ""
+        print -u2 "  Fix:      kubectl config use-context $expected"
+        print -u2 "  Override: PULUMI_DEPLOY_SKIP_CONTEXT_CHECK=1 pulumi_deploy $target $*"
+        print -u2 ""
+        return 1
+    fi
+
+    print -u2 "  Continuing -- '$verb' does not write. But a diff computed against the wrong"
+    print -u2 "  cluster is misleading, which is how a wrong-context apply gets approved."
+    print -u2 "  Consider: kubectl config use-context $expected"
+    print -u2 ""
+    return 0
+}
+
+function pulumi_deploy () {
+    local target="$1"
+    if [ -z "$target" ]; then
+        echo "Usage: pulumi_deploy <cloudflare|datadog|integration-us1|staging-us1|prod-us1> [pulumi args...]"
+        return 1
+    fi
+    shift
+
+    local filter script
+    local -a extra
+    extra=()
+
+    case "$target" in
+        cloudflare|cf)
+            filter="@magi/infra-cloudflare"
+            script="pulumi"
+            # Unlike the others, this script does not bake in a stack.
+            extra=(--stack mavenagi/cloudflare)
+            ;;
+        datadog|dd)
+            filter="datadog"
+            script="deploy:main"
+            ;;
+        integration-us1|integration|int)
+            filter="@magi/infra-kubernetes"
+            script="deploy:integration"
+            ;;
+        staging-us1|staging|stg)
+            filter="@magi/infra-kubernetes"
+            script="pulumi-staging"
+            ;;
+        prod-us1|prod)
+            filter="@magi/infra-kubernetes"
+            script="pulumi"
+            ;;
+        *)
+            echo "pulumi_deploy: unknown target '$target'"
+            echo "Expected one of: cloudflare datadog integration-us1 staging-us1 prod-us1"
+            return 1
+            ;;
+    esac
+
+    _pulumi_deploy_check_context "$target" "$@" || return 1
+
+    # `pnpm --filter` only resolves a package from inside the workspace. Prefer the
+    # workspace we are already standing in (there may be several checkouts/worktrees),
+    # and only fall back to a configured default.
+    local root="$PWD"
+    while [[ "$root" != "/" && ! -f "$root/pnpm-workspace.yaml" ]]; do
+        root="${root:h}"
+    done
+    if [[ ! -f "$root/pnpm-workspace.yaml" ]]; then
+        root="${HIGHLANDER_DIR:-$HOME/code/highlander-voice}"
+    fi
+    if [[ ! -f "$root/pnpm-workspace.yaml" ]]; then
+        echo "pulumi_deploy: not inside a pnpm workspace, and \$HIGHLANDER_DIR is unset or wrong"
+        echo "  cd into the monorepo, or: export HIGHLANDER_DIR=/path/to/highlander"
+        return 1
+    fi
+
+    pnpm -C "$root" --filter "$filter" "$script" "${extra[@]}" "$@"
+}

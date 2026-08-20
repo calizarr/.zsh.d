@@ -1,0 +1,118 @@
+#compdef k_events_sorted k_watch_pods k_delete_namespace k_delete_pvc k_apply_build k_del_build k_build_yaml vault_portforward argocd_admin_login
+
+# Completion for the kubernetes helpers in $ZDOTDIR/personal_funcs/_kubernetes.
+#
+# ---------------------------------------------------------------------------
+# The pattern, which generalises to every grouped function file:
+#
+#   `#compdef` on line 1 takes a LIST of commands, not just one. compinit
+#   registers this single file for all of them, and sets $service to whichever
+#   command is actually being completed -- so one file per group mirrors one
+#   function file per group. Add a helper to _kubernetes, add its name to the
+#   list above and a branch to the case below.
+#
+#   The filename is irrelevant to dispatch once `#compdef` is explicit; it only
+#   has to start with `_` and live on $fpath.
+#
+# Two practical notes, both learned the hard way with remote clusters:
+#
+#   * Every kubectl call here passes --request-timeout=2s. Without it, hitting
+#     Tab with the VPN down or a context pointing at an unreachable cluster
+#     hangs the shell until kubectl's default timeout, which feels like a lockup.
+#
+#   * Namespaces are cached (5 min, keyed by current context) via zsh's
+#     _cache_invalid/_retrieve_cache/_store_cache. oh-my-zsh already sets
+#     `use-cache yes` and a cache-path, so those work as-is. Pods and PVCs are
+#     NOT cached -- they churn, and a stale list is worse than a slow one.
+# ---------------------------------------------------------------------------
+
+# Rebuild a cache entry once its file is older than 5 minutes.
+__kh_cache_policy() {
+    local -a stale
+    stale=( "$1"(Nmm+5) )
+    (( $#stale ))
+}
+
+__kh_namespaces() {
+    local -a _kh_ns
+    local ctx="${$(kubectl config current-context 2>/dev/null):-none}"
+    # Key on the context so switching clusters does not serve the wrong list.
+    local cid="kh-ns-${ctx//[^A-Za-z0-9]/_}"
+
+    zstyle ":completion:${curcontext}:" cache-policy __kh_cache_policy
+
+    if _cache_invalid "$cid" || ! _retrieve_cache "$cid"; then
+        _kh_ns=( ${${(f)"$(kubectl --request-timeout=2s get namespaces -o name 2>/dev/null)"}#namespace/} )
+        (( $#_kh_ns )) && _store_cache "$cid" _kh_ns
+    fi
+
+    _describe -t namespaces 'namespace' _kh_ns
+}
+
+__kh_pvcs() {
+    local -a pvcs
+    pvcs=( ${${(f)"$(kubectl --request-timeout=2s get pvc -o name 2>/dev/null)"}#persistentvolumeclaim/} )
+    _describe -t pvcs 'pvc' pvcs
+}
+
+# vault_portforward takes the namespace as $1, so scope services to whatever has
+# been typed there already rather than to the current namespace.
+__kh_services() {
+    local -a svcs
+    local ns="${words[2]}"
+    svcs=( ${${(f)"$(kubectl --request-timeout=2s ${ns:+--namespace=$ns} get svc -o name 2>/dev/null)"}#service/} )
+    _describe -t services 'service' svcs
+}
+
+# Local kubeconfig read -- fast, no timeout or cache needed.
+__kh_contexts() {
+    local -a ctxs
+    ctxs=( ${(f)"$(kubectl config get-contexts -o name 2>/dev/null)"} )
+    _describe -t contexts 'context' ctxs
+}
+
+_kubernetes_helpers() {
+    local curcontext="$curcontext"
+
+    case "$service" in
+        # Optional single namespace, defaulting to the current one.
+        k_events_sorted|k_watch_pods)
+            _arguments '1:namespace:__kh_namespaces'
+            ;;
+
+        # Variadic: these loop over "$@".
+        k_delete_namespace)
+            _arguments '*:namespace:__kh_namespaces'
+            ;;
+        k_delete_pvc)
+            _arguments '*:pvc:__kh_pvcs'
+            ;;
+
+        # kustomize dir first, optional namespace second. `_files -/` is
+        # directories-only.
+        k_apply_build|k_del_build)
+            _arguments \
+                '1:build dir:_files -/' \
+                '2:namespace:__kh_namespaces'
+            ;;
+        k_build_yaml)
+            _arguments '1:build dir:_files -/'
+            ;;
+
+        vault_portforward)
+            _arguments \
+                '1:namespace:__kh_namespaces' \
+                '2:service:__kh_services' \
+                '3:context:__kh_contexts' \
+                '4:port:'
+            ;;
+
+        argocd_admin_login)
+            _arguments \
+                '1:account:(dev staging prod)' \
+                '2:color:(blue green)'
+            ;;
+    esac
+}
+
+_kubernetes_helpers "$@"

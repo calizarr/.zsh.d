@@ -1,0 +1,102 @@
+#compdef az_switch_sub az_get_subscription_id aks_get_creds
+
+# Completion for the Azure helpers in $ZDOTDIR/personal_funcs/_azure.
+#
+# aks_list and aks_write_all_creds_sub take no arguments, so they are not
+# registered. See _kubernetes_helpers for the general pattern (`#compdef` with a
+# command list plus dispatch on $service).
+#
+# Three things that matter here:
+#
+#   * `az` calls take seconds, so everything is cached (1h -- subscriptions and
+#     cluster inventories are near-static). oh-my-zsh already sets `use-cache yes`
+#     and a cache-path, so zsh's _cache_invalid/_retrieve_cache/_store_cache work
+#     as-is.
+#
+#   * Subscription names contain spaces and parens ("Maven Subscription (MAIN)"),
+#     so by the time a later argument is completed the earlier word is quoted.
+#     Earlier words are read back through ${(Q)...} to strip that quoting before
+#     handing them to az.
+#
+#   * aks_get_creds takes subscription, resource group, then cluster name. The rg
+#     and name lists are scoped to whatever has already been typed, so the third
+#     argument only offers clusters that actually live in the chosen rg.
+
+# Azure inventories barely move; an hour is plenty and keeps Tab instant.
+__azh_cache_policy() {
+    local -a stale
+    stale=( "$1"(Nmh+1) )
+    (( $#stale ))
+}
+
+__azh_subscriptions() {
+    local -a _subs
+    local cid="azh-subs"
+
+    zstyle ":completion:${curcontext}:" cache-policy __azh_cache_policy
+
+    if _cache_invalid "$cid" || ! _retrieve_cache "$cid"; then
+        _subs=( ${(f)"$(az account list --query '[].name' -o tsv 2>/dev/null)"} )
+        (( $#_subs )) && _store_cache "$cid" _subs
+    fi
+
+    _describe -t subscriptions 'subscription' _subs
+}
+
+# Populates __azh_rows in the CALLER's scope with "resourceGroup<TAB>name" rows.
+# zsh scopes locals dynamically, so a local declared by the caller is visible and
+# assignable here -- which is how both consumers below share one cached az call.
+__azh_aks_rows() {
+    local sub="$1"
+    local cid="azh-aks-${${sub:-current}//[^A-Za-z0-9]/_}"
+    local -a _rows
+
+    zstyle ":completion:${curcontext}:" cache-policy __azh_cache_policy
+
+    if _cache_invalid "$cid" || ! _retrieve_cache "$cid"; then
+        _rows=( ${(f)"$(az aks list ${sub:+--subscription "$sub"} --query '[].[resourceGroup,name]' -o tsv 2>/dev/null)"} )
+        (( $#_rows )) && _store_cache "$cid" _rows
+    fi
+
+    __azh_rows=( "${_rows[@]}" )
+}
+
+__azh_aks_rgs() {
+    local -a __azh_rows rgs
+    __azh_aks_rows "${(Q)words[2]}"
+    rgs=( ${(u)${__azh_rows%%$'\t'*}} )
+    _describe -t resource-groups 'resource group' rgs
+}
+
+__azh_aks_names() {
+    local -a __azh_rows names
+    local rg="${(Q)words[3]}"
+    __azh_aks_rows "${(Q)words[2]}"
+
+    if [[ -n "$rg" ]]; then
+        # Only clusters in the already-chosen resource group.
+        names=( ${${(M)__azh_rows:#${rg}$'\t'*}#*$'\t'} )
+    else
+        names=( ${__azh_rows#*$'\t'} )
+    fi
+
+    _describe -t clusters 'aks cluster' names
+}
+
+_azure_helpers() {
+    local curcontext="$curcontext"
+
+    case "$service" in
+        az_switch_sub|az_get_subscription_id)
+            _arguments '1:subscription:__azh_subscriptions'
+            ;;
+        aks_get_creds)
+            _arguments \
+                '1:subscription:__azh_subscriptions' \
+                '2:resource group:__azh_aks_rgs' \
+                '3:aks cluster:__azh_aks_names'
+            ;;
+    esac
+}
+
+_azure_helpers "$@"

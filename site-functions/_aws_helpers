@@ -1,0 +1,77 @@
+#compdef aws_assume_role aws_assume_role_long aws_assume_sdk_load
+
+# Completion for the AWS helpers in $ZDOTDIR/personal_funcs/_aws.
+#
+# Only the three functions that take arguments are registered; the rest
+# (aws_check_role, aws_unassume_*, aws_check_sdk) take none, so there is nothing
+# to complete.
+#
+# NOTE: profiles are read from ~/.aws/config and ~/.aws/credentials, and neither
+# file exists on this machine at the time of writing -- so this currently
+# completes to nothing. It will start working the moment a profile is configured.
+# Worth knowing that these helpers reference cibo-* profiles and KOPS_STATE_STORE,
+# which look vestigial.
+#
+# See _kubernetes_helpers for the general pattern (`#compdef` with a command list
+# plus dispatch on $service).
+
+# Section headers from both AWS ini files: `[foo]` and `[profile foo]`.
+# Local file reads, so no timeout or cache needed.
+#
+# Parsed in zsh rather than with sed, on purpose. The obvious BRE spelling of this
+# uses \+ and \?, which are GNU extensions that BSD sed (macOS) treats as literal
+# characters -- so it silently matches nothing there. `sed -E` would work on both,
+# and gsed would too, but native globbing sidesteps the whole GNU-vs-BSD question,
+# needs no probe for which sed is installed, and drops two subprocesses per Tab.
+__awsh_profiles() {
+    setopt localoptions extended_glob
+    local -a names
+    local f line name
+    for f in "${AWS_CONFIG_FILE:-$HOME/.aws/config}" \
+             "${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"; do
+        [[ -r $f ]] || continue
+        while IFS= read -r line; do
+            # Section headers only; (#b) enables backreferences into $match.
+            [[ $line == (#b)[[:space:]]#\[([^]]*)\][[:space:]]# ]] || continue
+            name=${match[1]}
+            # Drop a `profile ` prefix. The mandatory whitespace means a profile
+            # genuinely named e.g. `profileFoo` is left alone.
+            name=${name#profile[[:space:]]##}
+            name=${name##[[:space:]]#}
+            name=${name%%[[:space:]]#}
+            [[ -n $name ]] && names+=( $name )
+        done < $f
+    done
+    _describe -t profiles 'aws profile' names
+}
+
+# aws_assume_role / aws_assume_sdk_load take an optional second arg that
+# overrides KOPS_STATE_STORE. There is nothing to enumerate, but offering the
+# current and previous values covers the realistic cases.
+__awsh_kops_stores() {
+    local -a stores
+    [[ -n "$KOPS_STATE_STORE" ]]      && stores+=( "${KOPS_STATE_STORE}:current" )
+    [[ -n "$PREV_KOPS_STATE_STORE" ]] && stores+=( "${PREV_KOPS_STATE_STORE}:previous" )
+    if (( $#stores )); then
+        _describe -t kops-stores 'kops state store' stores
+    else
+        _message 'kops state store (s3://...)'
+    fi
+}
+
+_aws_helpers() {
+    local curcontext="$curcontext"
+
+    case "$service" in
+        aws_assume_role|aws_assume_sdk_load)
+            _arguments \
+                '1:aws profile:__awsh_profiles' \
+                '2:kops state store:__awsh_kops_stores'
+            ;;
+        aws_assume_role_long)
+            _arguments '1:aws profile:__awsh_profiles'
+            ;;
+    esac
+}
+
+_aws_helpers "$@"

@@ -1,0 +1,77 @@
+#compdef pulumi_deploy
+
+# Completion for pulumi_deploy (defined in $ZDOTDIR/personal_funcs/_pulumi).
+#
+# ---------------------------------------------------------------------------
+# This directory is on $fpath directly (see .zshrc, next to the
+# $USER_SITEFUNCTIONS line), so completions live in this repo and are
+# version-controlled. No symlinking into ~/.local/share required.
+#
+# How zsh picks this up, since it is not obvious the first time:
+#
+#   1. The FIRST LINE must be `#compdef <command>`. That is not a comment to
+#      zsh -- compinit scans for it to learn which command the file completes.
+#   2. The file must be named `_<something>` and be reachable via $fpath.
+#   3. compinit then AUTOLOADS it lazily on the first Tab. There is no
+#      `compdef` call anywhere; the marker line replaces it.
+#
+# Why this is not inlined next to the function: $ZDOTDIR/personal_funcs/* are
+# `source`d around line 136 of .zshrc, but `compinit` does not run until ~294,
+# and `compdef` does not exist until compinit defines it -- so an inline
+# `compdef` there would run too early. A file in $fpath sidesteps the ordering.
+#
+# Note that personal_funcs is deliberately NOT on $fpath (those files are
+# sourced). That is the only reason a function file can be called `_pulumi`
+# there without zsh mistaking it for a completion for a command named `pulumi`.
+#
+# After adding or editing this file, start a new shell. If completion does not
+# show up, the compdump is stale: rm -f "$ZDOTDIR"/.zcompdump* and restart.
+# ---------------------------------------------------------------------------
+
+_pulumi_deploy() {
+    local curcontext="$curcontext" state
+    local -a targets commands
+
+    # `_describe` takes 'value:description' pairs and shows the descriptions
+    # next to each completion. Canonical names only -- the short aliases (cf,
+    # dd, int, stg, prod) still work when typed, they are just not offered,
+    # which keeps the menu readable.
+    targets=(
+        'cloudflare:Cloudflare DNS/tunnels/access (stack mavenagi/cloudflare)'
+        'datadog:Datadog dashboards + monitors (stack mavenagi/datadog/main)'
+        'integration-us1:us1 integration Kubernetes stack'
+        'staging-us1:us1 staging Kubernetes stack'
+        'prod-us1:us1 prod Kubernetes stack'
+    )
+
+    commands=(
+        'preview:Show what an up would change, without applying'
+        'up:Apply changes'
+        'refresh:Reconcile state with live infrastructure'
+        'cancel:Cancel a stuck in-progress update'
+        'stack:Manage stacks'
+        'config:Manage stack configuration'
+        'destroy:Tear down all resources in the stack'
+        'logs:Show logs for the stack'
+    )
+
+    # `_arguments -C` with `->state` defers instead of completing inline: it
+    # sets $state and lets the case below decide. `1:`/`2:` are positional
+    # slots; `*::` collects everything after and hands it to _default, since
+    # pulumi's own flags are open-ended and not worth enumerating here.
+    _arguments -C \
+        '1:target:->target' \
+        '2:command:->command' \
+        '*::pulumi args:_default'
+
+    case "$state" in
+        target)
+            _describe -t targets 'pulumi_deploy target' targets
+            ;;
+        command)
+            _describe -t commands 'pulumi command' commands
+            ;;
+    esac
+}
+
+_pulumi_deploy "$@"
