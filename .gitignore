@@ -35,3 +35,9 @@ zsdoc/data
 # End of https://www.gitignore.io/api/zsh
 
 !.zsh*
+
+# Shell history and session state. Routinely contains credentials typed on the
+# command line, and is machine-local state rather than configuration. These must
+# come AFTER the `!.zsh*` un-ignore above -- in gitignore, the last matching rule wins.
+.zsh_history
+.zsh_sessions/
