@@ -282,6 +282,16 @@ if [[ -a "$(which op)" ]]; then
     compdef _op op
 fi
 
+if [[ -a "$(which unsloth)" ]]; then
+    #compdef unsloth
+
+    _unsloth_completion() {
+        eval $(env _TYPER_COMPLETE_ARGS="${words[1,$CURRENT]}" _UNSLOTH_COMPLETE=complete_zsh unsloth)
+    }
+
+    compdef _unsloth_completion unsloth
+fi
+
 if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
     GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
     export GITHUB_REPOS="$HOME/$GITHUB_REPO_DIR_NAME"
