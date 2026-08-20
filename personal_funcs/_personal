@@ -100,3 +100,18 @@ function terraform_admin () {
     export USE_GITHUB_OAUTH_TOKEN=k8s
     ./terraform "$@"
 }
+
+function npm_token_op () {
+    export NPM_TOKEN=$(op read "op://${SERVERS_VAULT_ID}/cy3pc7nxwp7sz5k4gluphjxe64/NPM_TOKEN")
+}
+
+# Example usage: op_edit_value "Datadog Pulumi Provider" "DD_BEARER_TOKEN" "TOKEN" ["VAULT"]
+# VAULT is useful for when items may have then same name in different vaults
+function op_edit_value () {
+    if [ -n "$4" ]; then
+        VAULT="$4"
+        op item edit --vault "$VAULT" "$1" "$2=$3"
+    else
+        op item edit "$1" "$2=$3"
+    fi
+}

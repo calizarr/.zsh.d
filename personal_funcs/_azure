@@ -21,3 +21,7 @@ function aks_write_all_creds_sub() {
         eval "$cred"
     done
 }
+
+function az_get_subscription_id() {
+    az account list | jq -r --arg name "$1" '.[] | select(.name | test($name; "i")).id'
+}

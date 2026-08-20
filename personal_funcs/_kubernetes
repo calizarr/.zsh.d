@@ -164,3 +164,6 @@ function add_key () {
     vault read infra/k8s_admin_ssh_key-$1 -format=json | jq -r .data.private_key | ssh-add -
 }
 
+function k_pods_check() {
+    kubectl get pods -A -o wide | rg -v "Running|Completed"
+}

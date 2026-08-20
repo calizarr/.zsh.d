@@ -131,8 +131,18 @@ alias kns=kubens
 USER_SITEFUNCTIONS="$HOME/.local/share/zsh/site-functions/"
 fpath=( $USER_SITEFUNCTIONS $fpath )
 
-# Add Functions from another file to fpath
-# Figure out how to use $fpath for this, it's a bit more complicated, source file for now
+# Completions living in this repo, so they are version-controlled rather than
+# stranded in ~/.local/share. Must be on fpath BEFORE compinit (see bottom of this
+# file): compinit scans fpath for `_*` files whose first line is `#compdef <cmd>`
+# and autoloads them lazily on first Tab.
+fpath=( "$ZDOTDIR/site-functions" $fpath )
+
+# Personal function collections. These are SOURCED, not autoloaded, on purpose:
+# fpath/autoload is a one-function-per-file contract -- the filename must equal the
+# function name and the file must hold only the body. These files are topical
+# groups (a dozen-odd functions each), so autoloading `_kubernetes` would define a
+# function called `_kubernetes` that you would have to call before k_watch_pods et
+# al existed. Sourcing is the right tool for grouped helpers.
 for f in $(find "$ZDOTDIR/personal_funcs" -type f -name "_*"); do
     # echo "$f"
     source "$f"
@@ -167,10 +177,8 @@ case "$OSTYPE" in
     darwin*)
         plugins+=("macos" "brew")
         # export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
-        # source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-        # source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-        # source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-        # fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+        fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+        fpath+="$(brew --prefix)/share/zsh/site-functions"
         # source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
         alias grep="ggrep "
         ;;
@@ -216,6 +224,11 @@ fi
 GPG_TTY=$(tty)
 export GPG_TTY
 
+# Resolve symlinks on cd, so $PWD (and anything reading it, e.g. tools that key
+# off cwd like Claude Code) always sees the physical path, not the symlinked one
+# (e.g. /mavenagi -> /Users/clizarraga/code).
+setopt CHASE_LINKS
+
 # Some crazy autoloading
 # autoload -U bashcompinit && bashcompinit
 # autoload -U compinit && compinit
@@ -250,6 +263,11 @@ if [[ -a "$(which kustomize)" ]] && [ ! -f "$KUSTOMIZE_SF" ]; then
     kustomize completion zsh > "$KUSTOMIZE_SF"
 fi
 
+ARGOCD_SF="$USER_SITEFUNCTIONS/_argocd"
+if [[ -a "$(which argocd)" ]] && [ ! -f "$ARGOCD_SF" ]; then
+    argocd completion zsh > "$ARGOCD_SF"
+fi
+
 if [[ -a "$(which microk8s.kubectl)" ]]; then
     MK8S_SF="$USER_SITEFUNCTIONS/_microk8s.kubectl"
     microk8s.kubectl completion zsh | sed 's/kubectl/microk8s.kubectl/g' > "$MK8S_SF"
@@ -274,6 +292,14 @@ if eval "gpg -k --keyid-format=long | rg 'Work key for signing' -B3" > /dev/null
 else
     export GPG_DEFAULT_KEY=$(gpg -k --keyid-format=long | rg 'Personal Key' -B3 | sed -n '2p' | xargs)
 fi
+
+# Presumably needs ALMOST everything
+if [[ "$(sysctl -n machdep.cpu.brand_string)" == "Apple M4 Max" ]]; then
+    export ADD_USE_SVE_FLAG=true
+    export SERVERS_VAULT_ID="k7hgvv45o7ej2px5bqnd3kthq4"
+    # echo "Retrieving NPM token"
+fi
+
 
 autoload -Uz compinit
 compinit -z
