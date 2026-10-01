@@ -81,7 +81,10 @@ plugins=(
     python
     kubectl
     kube-ps1
-    git
+    # git: 210 aliases (gst, gco, ...) none of which appear in shell history, and it
+    # forks `git version` on load (~120ms per shell in all). The prompt's git segment
+    # comes from oh-my-zsh's lib/git.zsh, not this plugin.
+    # git
     history-substring-search
     zsh-autosuggestions
     # zsh-completions
@@ -181,9 +184,13 @@ case "$OSTYPE" in
     # OSX Brew Specifics
     darwin*)
         plugins+=("macos" "brew")
+        # Homebrew's prefix without forking `brew --prefix` (~25ms each): it is two levels
+        # up from the brew on PATH (/opt/homebrew/bin/brew -> /opt/homebrew; /usr/local on
+        # Intel). Exported before oh-my-zsh loads, so the brew plugin skips its own fork.
+        (( $+commands[brew] )) && export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-${commands[brew]:h:h}}"
         # export fpath=(/usr/local/share/zsh-completions /usr/local/share/zsh/site-functions $fpath)
         fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
-        fpath+="$(brew --prefix)/share/zsh/site-functions"
+        fpath+="$HOMEBREW_PREFIX/share/zsh/site-functions"
         # source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
         alias grep="ggrep "
         export CFLAGS="-I/opt/homebrew/include $CFLAGS"
@@ -250,11 +257,6 @@ if [[ -d "$NVM_DIR" ]]; then
     }
 fi
 
-# Setting up SDKMAN
-if [[ -d "$HOME/.sdkman/" ]]; then
-    export SDKMAN_DIR="$HOME/.sdkman"
-    [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-fi
 
 # Apparently required to disable GUI gpg
 GPG_TTY=$(tty)
@@ -269,25 +271,9 @@ setopt CHASE_LINKS
 # autoload -U bashcompinit && bashcompinit
 # autoload -U compinit && compinit
 
-if [[ -a "$(which pipx)" ]]; then
-    eval $(register-python-argcomplete pipx)
-fi
 
-if [[ -a "$(which vault)" ]]; then
-    # autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
-    complete -C '$(which vault)' vault
-fi
 
-if [[ -a "$(which terraform)" ]]; then
-    # autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
-    complete -C '$(which terraform)' terraform
-fi
 
-if [[ -a "$(which aws)" ]]; then
-    # AWS Completion
-    # autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
-    complete -C '$(which aws_completer)' aws
-fi
 
 HELM_SF="$USER_SITEFUNCTIONS/_helm"
 if [[ -a "$(which helm)" ]] && [ ! -f "$HELM_SF" ]; then
@@ -330,15 +316,6 @@ if (( $+commands[op] )); then
     unset OP_BIN
 fi
 
-if [[ -a "$(which unsloth)" ]]; then
-    #compdef unsloth
-
-    _unsloth_completion() {
-        eval $(env _TYPER_COMPLETE_ARGS="${words[1,$CURRENT]}" _UNSLOTH_COMPLETE=complete_zsh unsloth)
-    }
-
-    compdef _unsloth_completion unsloth
-fi
 
 # bloop's own snippet ran a second `compinit` here; the one at the bottom of this file
 # already picks up anything on fpath, so only the fpath entry is needed. Its installer
@@ -365,10 +342,56 @@ if [[ "$(sysctl -n machdep.cpu.brand_string)" == "Apple M4 Max" ]]; then
 fi
 
 
-autoload -Uz compinit
-compinit -z
+# oh-my-zsh runs the one compinit for this shell (oh-my-zsh.sh, with its own dump file),
+# so there is no compinit here. Everything above only adds to fpath.
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 source $ZSH/oh-my-zsh.sh
+
+# ---------------------------------------------------------------------------
+# Completions that need compinit/bashcompinit to have run already.
+#
+# These used to sit above and only worked because sdkman-init.sh happened to run its
+# own compinit + bashcompinit first -- three compinit calls per shell in all (sdkman,
+# an explicit one here, and oh-my-zsh's). Placed after oh-my-zsh, `compdef` already
+# exists, so sdkman skips its compinit and only loads the `sdk` completion.
+# ---------------------------------------------------------------------------
+autoload -U bashcompinit && bashcompinit
+
+# Setting up SDKMAN
+if [[ -d "$HOME/.sdkman/" ]]; then
+    export SDKMAN_DIR="$HOME/.sdkman"
+    [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+fi
+
+if [[ -a "$(which pipx)" ]]; then
+    eval $(register-python-argcomplete pipx)
+fi
+
+if [[ -a "$(which vault)" ]]; then
+    # autoload bashcompinit && bashcompinit && complete -C '$(which vault)' vault
+    complete -C '$(which vault)' vault
+fi
+
+if [[ -a "$(which terraform)" ]]; then
+    # autoload bashcompinit && bashcompinit && complete -C '$(which terraform)' terraform
+    complete -C '$(which terraform)' terraform
+fi
+
+if [[ -a "$(which aws)" ]]; then
+    # AWS Completion
+    # autoload bashcompinit && bashcompinit && complete -C '$(which aws_completer)' aws
+    complete -C '$(which aws_completer)' aws
+fi
+
+if [[ -a "$(which unsloth)" ]]; then
+    #compdef unsloth
+
+    _unsloth_completion() {
+        eval $(env _TYPER_COMPLETE_ARGS="${words[1,$CURRENT]}" _UNSLOTH_COMPLETE=complete_zsh unsloth)
+    }
+
+    compdef _unsloth_completion unsloth
+fi
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
