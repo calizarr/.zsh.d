@@ -152,8 +152,10 @@ done
 # Source SSH settings, if applicable
 if [ -f "${SSH_ENV}" ]; then
     . "${SSH_ENV}" > /dev/null
-    #ps ${SSH_AGENT_PID} doesn't work under cywgin
-    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+    # Agent still alive? `kill -0` only asks whether the PID exists (a builtin, no
+    # fork); the live socket check guards against the PID having been reused by an
+    # unrelated process. Replaces `ps -ef | grep`, which cost ~70ms per shell.
+    kill -0 "$SSH_AGENT_PID" 2>/dev/null && [[ -S "$SSH_AUTH_SOCK" ]] || {
         start_agent;
     }
 else
@@ -161,7 +163,10 @@ else
 fi
 
 # Pyenv
-eval "$(pyenv init -)";
+# --no-rehash: the rehash `pyenv init` runs by default cost ~440ms per shell. It is
+# only needed after installing a Python or a package with console scripts -- run
+# `pyenv rehash` by hand then.
+eval "$(pyenv init - --no-rehash)";
 eval "$(pyenv virtualenv-init -)"
 
 # Goenv
@@ -210,11 +215,40 @@ case "$OSTYPE" in
 esac
 
 
-# Setting up NVM
-setopt no_aliases
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-setopt aliases
+# Setting up NVM -- lazily. Sourcing nvm.sh and resolving the default version cost
+# ~1.1s per shell. Instead:
+#   1. put the default version's bin dir on PATH directly, so node/npm/npx work at once;
+#   2. define `nvm` as a stub that loads the real nvm the first time it is called.
+# The default is read from $NVM_DIR/alias/default: "24" resolves to the newest
+# installed v24.*, "24.20.0" to exactly that. Anything else ("node", "lts/*") is
+# resolved by nvm itself, so that case falls back to loading nvm up front.
+if [[ -d "$NVM_DIR" ]]; then
+    _nvm_load () {
+        setopt local_options no_aliases
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" "$@"
+        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    }
+    () {
+        local want
+        local -a candidates
+        [[ -r "$NVM_DIR/alias/default" ]] && want="$(<$NVM_DIR/alias/default)"
+        want="${want#v}"
+        if [[ "$want" == [0-9]* ]]; then
+            candidates=( $NVM_DIR/versions/node/v${want}(N/) $NVM_DIR/versions/node/v${want}.*(N/n) )
+        fi
+        if (( $#candidates )); then
+            path=( "${candidates[-1]}/bin" $path )
+            export NVM_BIN="${candidates[-1]}/bin"
+            nvm () {
+                unfunction nvm
+                _nvm_load --no-use
+                nvm "$@"
+            }
+        else
+            _nvm_load
+        fi
+    }
+fi
 
 # Setting up SDKMAN
 if [[ -d "$HOME/.sdkman/" ]]; then
@@ -279,9 +313,21 @@ if [[ -a "$(which microk8s.kubectl)" ]]; then
     alias mh="microk8s.helm "
 fi
 
-if [[ -a "$(which op)" ]]; then
-    eval "$(op completion zsh)"
-    compdef _op op
+# 1Password CLI completion, cached. `op completion zsh` cost ~80ms per shell, so it is
+# written to site-functions once and compinit autoloads it like helm/argocd above.
+# The cache is keyed on the RESOLVED binary path: the Homebrew cask keeps one dir per
+# version (.../Caskroom/1password-cli/<version>/op), so an `op` upgrade changes the
+# path and the next shell regenerates. (The binary's mtime is the vendor's build date,
+# not the install date, so a `-nt` check would miss upgrades.) `:A` and `$(<file)` are
+# zsh builtins -- the check itself forks nothing.
+if (( $+commands[op] )); then
+    OP_SF="$USER_SITEFUNCTIONS/_op"
+    OP_STAMP="$USER_SITEFUNCTIONS/.op-completion-source"
+    OP_BIN="${commands[op]:A}"
+    if [[ ! -s "$OP_SF" || ! -r "$OP_STAMP" || "$(<$OP_STAMP)" != "$OP_BIN" ]]; then
+        op completion zsh > "$OP_SF" && print -r -- "$OP_BIN" > "$OP_STAMP"
+    fi
+    unset OP_BIN
 fi
 
 if [[ -a "$(which unsloth)" ]]; then
