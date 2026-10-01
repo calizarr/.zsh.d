@@ -294,11 +294,11 @@ if [[ -a "$(which unsloth)" ]]; then
     compdef _unsloth_completion unsloth
 fi
 
-if [[ -a "$(which bloop)" ]]; then
-    autoload -U compinit
-    fpath=($HOME/.bloop/zsh $fpath)
-    compinit
-fi
+# bloop's own snippet ran a second `compinit` here; the one at the bottom of this file
+# already picks up anything on fpath, so only the fpath entry is needed. Its installer
+# puts completions in ~/.bloop/zsh (a Coursier install does not, so this is often a
+# no-op). Testing the directory skips the `which` fork on every shell start.
+[[ -d "$HOME/.bloop/zsh" ]] && fpath=("$HOME/.bloop/zsh" $fpath)
 
 if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
     GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
