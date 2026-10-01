@@ -33,27 +33,49 @@ _pulumi_deploy() {
     local -a targets commands
 
     # `_describe` takes 'value:description' pairs and shows the descriptions
-    # next to each completion. Canonical names only -- the short aliases (cf,
-    # dd, int, stg, prod) still work when typed, they are just not offered,
-    # which keeps the menu readable.
+    # next to each completion. The long short-names are offered; the two-letter
+    # aliases (cf, dd, int, stg, prod) still work when typed, they are just not
+    # offered, which keeps the menu readable.
     targets=(
         'cloudflare:Cloudflare DNS/tunnels/access (stack mavenagi/cloudflare)'
-        'datadog:Datadog dashboards + monitors (stack mavenagi/datadog/main)'
-        'integration-us1:us1 integration Kubernetes stack'
-        'staging-us1:us1 staging Kubernetes stack'
-        'prod-us1:us1 prod Kubernetes stack'
+        'datadog:= datadog:main'
+        'integration-us1:= kubernetes:integration'
+        'staging-us1:= kubernetes:staging'
+        'prod-us1:= kubernetes:prod'
     )
 
-    commands=(
-        'preview:Show what an up would change, without applying'
-        'up:Apply changes'
-        'refresh:Reconcile state with live infrastructure'
-        'cancel:Cancel a stuck in-progress update'
-        'stack:Manage stacks'
-        'config:Manage stack configuration'
-        'destroy:Tear down all resources in the stack'
-        'logs:Show logs for the stack'
-    )
+    # Everything else comes from the workspace's package.json scripts (see
+    # _pulumi_deploy_discover in personal_funcs/_pulumi). Target names contain
+    # ":", which _describe would read as the description separator, so escape it.
+    local root line
+    local -a fields
+    if (( $+functions[_pulumi_deploy_root] )) && root="$(_pulumi_deploy_root)"; then
+        for line in ${(f)"$(_pulumi_deploy_discover "$root")"}; do
+            fields=("${(@ps:\t:)line}")
+            targets+=("${fields[1]//:/\\:}:${fields[2]} ${fields[3]} (stack ${fields[4]})")
+        done
+    fi
+
+    # Read from `pulumi --help` rather than hardcoded, so the list tracks the
+    # installed CLI. Every command line sits under a "... Commands:" heading,
+    # indented two spaces as `name   description`; parsing stops at "Flags:".
+    # Cached for the life of the shell: the first Tab costs ~0.2s, the rest
+    # nothing. After upgrading pulumi, `unset _PULUMI_DEPLOY_COMMANDS` (or open
+    # a new shell) to re-read it.
+    if (( ! ${+_PULUMI_DEPLOY_COMMANDS} )); then
+        typeset -ga _PULUMI_DEPLOY_COMMANDS
+        _PULUMI_DEPLOY_COMMANDS=(${(f)"$(
+            pulumi --help 2>/dev/null | awk '
+                /^Flags:/            { exit }
+                /Commands:$/         { in_cmds = 1; next }
+                in_cmds && /^  [a-z]/ {
+                    name = $1; $1 = ""; sub(/^ +/, "")
+                    gsub(/:/, "\\:")   # _describe splits value from description on ":"
+                    print name ":" $0
+                }'
+        )"})
+    fi
+    commands=("${_PULUMI_DEPLOY_COMMANDS[@]}")
 
     # `_arguments -C` with `->state` defers instead of completing inline: it
     # sets $state and lets the case below decide. `1:`/`2:` are positional
