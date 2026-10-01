@@ -41,3 +41,9 @@ zsdoc/data
 # come AFTER the `!.zsh*` un-ignore above -- in gitignore, the last matching rule wins.
 .zsh_history
 .zsh_sessions/
+
+# Secrets must never be committed (standing rule): env files, private keys, credential files.
+.env
+.env.*
+*.pem
+credentials.*
