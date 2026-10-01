@@ -181,6 +181,8 @@ case "$OSTYPE" in
         fpath+="$(brew --prefix)/share/zsh/site-functions"
         # source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
         alias grep="ggrep "
+        export CFLAGS="-I/opt/homebrew/include $CFLAGS"
+        export LDFLAGS="-L/opt/homebrew/lib $LDFLAGS"
         ;;
 esac
 
@@ -292,6 +294,12 @@ if [[ -a "$(which unsloth)" ]]; then
     compdef _unsloth_completion unsloth
 fi
 
+if [[ -a "$(which bloop)" ]]; then
+    autoload -U compinit
+    fpath=($HOME/.bloop/zsh $fpath)
+    compinit
+fi
+
 if eval ls $HOME | grep -iP "github[-_]repos" > /dev/null; then
     GITHUB_REPO_DIR_NAME=$(ls $HOME | grep -iP "github[-_]repos")
     export GITHUB_REPOS="$HOME/$GITHUB_REPO_DIR_NAME"
@@ -320,3 +328,4 @@ source $ZSH/oh-my-zsh.sh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 PROMPT='$(kube_ps1)'$PROMPT
+

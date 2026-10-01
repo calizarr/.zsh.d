@@ -28,11 +28,9 @@ case "$OSTYPE" in
         # emacs_app=$(readlink -f ${emacs_symlink_path})
         # emacs_path=$(echo "${emacs_app}" | cut -d'/' -f1-6)
         # path+=${emacs_path}/bin/
-        export PNPM_HOME="~/Library/pnpm"
-        case ":$PATH:" in
-            *":$PNPM_HOME/bin:"*) ;;
-            *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-        esac
+        export PNPM_HOME="$HOME/Library/pnpm"
+        export COURSIER_SUPPORT="$HOME/Library/Application Support/Coursier/bin"
+        path=($COURSIER_SUPPORT $PNPM_HOME $path)
         ;;
     linux*)
 
